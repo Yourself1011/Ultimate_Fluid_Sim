@@ -58,5 +58,5 @@ float viscosityKernelFunction(float dist, float r) {
  * @return  The laplacian of the viscosity kernel
  */
 float laplacianViscosity(float dist, float r) {
-    return (45) / (PI * pow(r, 6)) * (r - dist);
+    return (30) / (PI * pow(r, 6)) * (r - dist);
 }

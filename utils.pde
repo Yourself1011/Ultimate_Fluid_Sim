@@ -16,13 +16,19 @@ float distSq(PVector a, PVector b) {
  * @return  the vector without non-number components
  */
 PVector fixVector(PVector vec) {
-    if (Float.isNaN(vec.x)) {
-        println("x component was NaN");
+    if (Float.isNaN(vec.x) || vec.x == Float.POSITIVE_INFINITY ||
+        vec.x == Float.NEGATIVE_INFINITY) {
+        // println("x component was NaN");
         vec.x = 0;
     }
-    if (Float.isNaN(vec.y)) {
-        println("y component was NaN");
+    if (Float.isNaN(vec.y) || vec.y == Float.POSITIVE_INFINITY ||
+        vec.y == Float.NEGATIVE_INFINITY) {
+        // println("y component was NaN");
         vec.y = 0;
     }
+    vec.z = 0;
+    // if (vec.z != 0 || vec.z == Float.POSITIVE_INFINITY ||
+    //     vec.z == Float.NEGATIVE_INFINITY) {
+    // }
     return vec;
 }

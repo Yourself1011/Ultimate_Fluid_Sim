@@ -4,13 +4,17 @@ import java.awt.Frame;
 import java.util.function.*;
 import java.util.*;
 
+final float[] rkCoefficients = {1, 0.5, 0.5, 1};
+// final float[] rkCoefficients = {1};
+float divBy;
+
 ArrayList<Particle> particles = new ArrayList<Particle>();
 Particle testParticle;
 float t, lastFrame, speed = 1;
 float smoothingRadius = 10;
 float zoom = 9;
 float mouseRadius = 10, mousePower = 15;
-PVector cameraPos = new PVector(0, 0), mouseVec;
+PVector cameraPos = new PVector(), mouseVec;
 float frameX, frameY, lastFrameX, lastFrameY;
 int n; // number of particles
 boolean fpsCounter = true;
@@ -70,16 +74,19 @@ void setup() {
                 new VectorGetter[]{Particle::window},
                 new PVector(0, 0),
                 new PVector(0, 0),
-                new PVector(i * 1, j * 1),
+                new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
+                // new PVector(i * 1, j * 1),
                 // windowToGlobal(new PVector(random(width), random(height))),
-                0.25,
-                10,
-                15,
-                color(255, 0, 0)
-                // i < 0 ? 0.25 : 0.3,
+                // 1,
+                // 0.25,
+                // 10,
                 // 15,
-                // i < 0 ? 400 : 10,
-                // i < 0 ? color(255, 0, 0) : color(0, 255, 255)
+                // color(0, 128, 255)
+                j < 10 ? 1 : 0.8,
+                j < 10 ? 0.25 : 0.2,
+                j < 10 ? 5 : 5,
+                j < 10 ? 15 : 10,
+                j < 10 ? color(255, 0, 0) : color(0, 255, 255)
             ));
         }
     }
@@ -107,7 +114,11 @@ void setup() {
     //     0.5
     // ));
     n = particles.size();
-    createGUI();
+    // createGUI();
+
+    for (float coefficient : rkCoefficients) {
+        divBy += 1 / coefficient;
+    }
 }
 
 void draw() {
@@ -118,8 +129,7 @@ void draw() {
 
     if (lastFrame == 0) lastFrame = millis();
     // t = (millis() - lastFrame) / 1000 * speed;
-    t = 1 / 10.0;
-    lastFrame = millis();
+    t = 1 / 20.0;
 
     getFramePos();
 
@@ -160,9 +170,14 @@ void draw() {
         particle.calculatePressure();
     });
 
+    // float timeDebug = millis();
     // move the particles
-    particles.parallelStream().forEach(Particle::move);
+    particles.parallelStream().forEach(particle->{
+        particle.rk4();
+        particle.move();
+    });
 
+    // println(millis() - timeDebug, millis() - lastFrame);
     // draw inside a normal for loop because processing doesn't like it when you
     // try to draw things in parallel
     for (Particle particle : particles) {
@@ -192,8 +207,13 @@ void draw() {
         textAlign(RIGHT, TOP);
         textSize(24);
         fill(255);
-        text("Fps: " + frameRate, width - 10, 10);
+        text(
+            "Fps: " + frameRate + "\nmspf: " + (millis() - lastFrame),
+            width - 10,
+            10
+        );
     }
+    lastFrame = millis();
 }
 
 void getFramePos() {
