@@ -6,13 +6,15 @@ import java.util.*;
 
 final float[] rkCoefficients = {1, 0.5, 0.5, 1};
 // final float[] rkCoefficients = {1};
-float divBy;
+GImageToggleButton[] mouseModeButtons;
 
+float divBy;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 Particle testParticle;
 float t, lastFrame, speed = 1;
-float smoothingRadius = 10;
+float smoothingRadius = 7;
 float zoom = 9;
+MouseMode mouseMode = MouseMode.NONE;
 float mouseRadius = 10, mousePower = 15;
 PVector cameraPos = new PVector(), mouseVec;
 float frameX, frameY, lastFrameX, lastFrameY;
@@ -66,27 +68,27 @@ void setup() {
         for (int j = -25; j < 25; j++) {
             particles.add(new Particle(
                 new VectorGetter[]{
-                    Particle::pressure,
-                    Particle::viscosity,
-                    Particle::gravity,
-                    Particle::mouse
+                    (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
+                    (VectorGetter<Particle>) Particle::pressure,
+                    (VectorGetter<Particle>) Particle::viscosity,
+                    (VectorGetter<Particle>) Particle::mouse
                 },
-                new VectorGetter[]{Particle::window},
+                new VectorGetter[]{(VectorGetter<Particle>) Particle::window},
                 new PVector(0, 0),
                 new PVector(0, 0),
                 new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
                 // new PVector(i * 1, j * 1),
                 // windowToGlobal(new PVector(random(width), random(height))),
-                // 1,
-                // 0.25,
-                // 10,
-                // 15,
-                // color(0, 128, 255)
-                j < 10 ? 1 : 0.8,
-                j < 10 ? 0.25 : 0.2,
-                j < 10 ? 5 : 5,
-                j < 10 ? 15 : 10,
-                j < 10 ? color(255, 0, 0) : color(0, 255, 255)
+                1,
+                0.35,
+                10,
+                15,
+                color(0, 128, 255)
+                // j < 10 ? 1 : 0.8,
+                // j < 10 ? 0.25 : 0.2,
+                // j < 10 ? 5 : 5,
+                // j < 10 ? 15 : 10,
+                // j < 10 ? color(255, 0, 0) : color(0, 255, 255)
             ));
         }
     }
@@ -114,7 +116,14 @@ void setup() {
     //     0.5
     // ));
     n = particles.size();
-    // createGUI();
+    createGUI();
+
+    mouseModeButtons = new GImageToggleButton[]{
+        toolAddFluid,
+        toolRemoveFluid,
+        toolRepel,
+        toolAttract
+    };
 
     for (float coefficient : rkCoefficients) {
         divBy += 1 / coefficient;
@@ -200,6 +209,13 @@ void draw() {
     // println(test.density, test.pressure);
     // smoothingRadius += 0.1;
 
+    if (mouseMode != MouseMode.NONE) {
+        noFill();
+        stroke(255);
+        strokeWeight(0.25);
+        circle(mouseVec.x - frameX, mouseVec.y - frameY, mouseRadius);
+    }
+
     popMatrix();
 
     if (fpsCounter) {
@@ -208,11 +224,39 @@ void draw() {
         textSize(24);
         fill(255);
         text(
-            "Fps: " + frameRate + "\nmspf: " + (millis() - lastFrame),
+            "fps: " + frameRate + "\nmspf: " + (millis() - lastFrame),
             width - 10,
             10
         );
     }
+
+    if (mousePressed && mouseMode == MouseMode.ADD_FLUID) {
+        for (int i = 0; i < mousePower / 15 * PI * pow(mouseRadius, 2); i++) {
+            float theta = random(0, 2 * PI);
+            float mag = random(0, mouseRadius);
+            particles.add(new Particle(
+                new VectorGetter[]{
+                    (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
+                    (VectorGetter<Particle>) Particle::pressure,
+                    (VectorGetter<Particle>) Particle::viscosity,
+                    (VectorGetter<Particle>) Particle::mouse
+                },
+                new VectorGetter[]{(VectorGetter<Particle>) Particle::window},
+                new PVector(0, 0),
+                new PVector(0, 0),
+                PVector.add(
+                    mouseVec,
+                    new PVector(cos(theta) * mag, sin(theta) * mag)
+                ),
+                1,
+                0.35,
+                10,
+                15,
+                color(128, 128, 255)
+            ));
+        }
+    }
+
     lastFrame = millis();
 }
 

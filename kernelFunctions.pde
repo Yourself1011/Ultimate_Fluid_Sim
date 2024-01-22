@@ -6,6 +6,7 @@
  */
 float cubicKernelFunction(float dist, float r) {
     return (3) / (2 * PI * pow(r, 5)) * pow(r - dist, 3);
+    //  + (4) / (8 * PI * pow(r, 4)) * pow(r - dist, 2);
 }
 
 /**
@@ -18,6 +19,7 @@ float cubicKernelFunction(float dist, float r) {
 PVector gradCubic(PVector i, PVector j, float r) {
     float dist = PVector.dist(i, j);
     float coefficient = -(9 * pow(r - dist, 2)) / (2 * PI * pow(r, 5) * dist);
+    //  -(8 * pow(r - dist, 2)) / (8 * PI * pow(r, 4) * dist);
 
     // return new PVector(
     //     -(9 * (i.x - j.x) * pow(r - dist, 2)) / (2 * PI * pow(r, 5) * dist),

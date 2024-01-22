@@ -1,4 +1,6 @@
 // A function that returns a PVector, for force calculations and velocity
 // modifiers
-interface VectorGetter extends Function<Particle, PVector> {
+interface VectorGetter<T extends PhysicsObject> extends Function<T, PVector> {
 }
+// interface AnyVectorGetter extends VectorGetter < ? extends PhysicsObject > {
+// }

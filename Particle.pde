@@ -1,10 +1,5 @@
-class Particle {
-    VectorGetter[] forces;
-    VectorGetter[] velMods;
-    PVector force, vel, tempVel = new PVector(), pos, tempPos = new PVector(),
-                        prevPos = new PVector();
-    ArrayList<PVector> k = new ArrayList<PVector>();
-    float mass, density, pressure, restDensity, stiffness, viscosity;
+class Particle extends PhysicsObject {
+    float density, pressure, restDensity, stiffness, viscosity;
     int hash;
     color col;
     ArrayList<Particle> neighbors = new ArrayList<Particle>();
@@ -21,70 +16,12 @@ class Particle {
         float viscosity,
         color col
     ) {
-        this.forces = f;
-        this.velMods = v;
-        this.force = force;
-        this.vel = vel;
-        this.pos = pos;
-        this.mass = mass;
+        super(f, v, force, vel, pos, mass);
         this.restDensity = restDensity;
         this.stiffness = stiffness;
         this.viscosity = viscosity;
         this.col = col;
-
-        for (int i = 0; i < rkCoefficients.length; i++) {
-            k.add(new PVector());
-        }
-    }
-
-    void rk4() {
-        // find k1
-        PVector kThis = k.get(0);
-        kThis.set(force);
-        // includes any forces applied during neighbor search
-        // (eg. random force from particles on top of each other)
-
-        tempVel.set(vel);
-        tempPos.set(pos);
-
-        for (VectorGetter f : forces) {
-            kThis.add(fixVector(f.apply(this)));
-            // if (kThis.mag() == Float.POSITIVE_INFINITY) println(f);
-        }
-
-        // find the rest
-        for (int i = 1; i < rkCoefficients.length; i++) {
-            tempVel.add(PVector.mult(kThis, t * rkCoefficients[i] / mass));
-            tempPos.add(PVector.mult(tempVel, t * rkCoefficients[i]));
-
-            kThis = k.get(i);
-            kThis.set(0, 0);
-
-            for (VectorGetter f : forces) {
-                kThis.add(fixVector(f.apply(this)));
-            }
-        }
-    }
-
-    void move() {
-        for (int i = 0; i < rkCoefficients.length; i++) {
-            force.add(k.get(i).div(rkCoefficients[i]));
-        }
-        force.div(divBy);
-
-        // for (VectorGetter f : forces) {
-        //     force.add(fixVector(f.apply(this)));
-        // }
-
-        vel.add(PVector.mult(force, t / mass));
-
-        for (VectorGetter v : velMods) {
-            vel = fixVector(v.apply(this));
-        }
-
-        pos.add(PVector.mult(vel, t));
-        fixVector(pos);
-        force.set(0, 0);
+        this.prevPos = pos.copy();
     }
 
     void hash() {
@@ -111,7 +48,6 @@ class Particle {
             for (float y = -smoothingRadius; y <= smoothingRadius;
                  y += smoothingRadius) {
                 int cellHash = hashPosition(pos.copy().add(x, y));
-                // println("sussy");
                 int firstIndex = binarySearch(
                     particles,
                     cellHash,
@@ -165,14 +101,13 @@ class Particle {
                         if (particle != this) {
 
                             if (distSq == 0 || Float.isNaN(distSq)) {
-                                force.add(PVector.random2D());
+                                force.add(PVector.random2D().mult(0.25));
                                 // println(this.pos, particle.pos, distSq);
                             } else if (distSq <= pow(smoothingRadius, 2))
                                 neighbors.add(particle);
                         }
                     }
                 }
-                // println("e");
             }
         }
     }
@@ -205,36 +140,34 @@ class Particle {
 
     void draw() {
         // println(pressure);
-        // fill(lerpColor(
-        //     color(8, 8, 255),
-        //     color(255, 0, 0),
-        //     map(pressure, -stiffness, stiffness, 0, 1)
-        // ));
-        fill(col);
+        fill(lerpColor(
+            color(8, 8, 255),
+            color(255, 0, 0),
+            map(pressure, -stiffness, stiffness, 0, 1)
+        ));
+        // fill(col);
         noStroke();
         circle(pos.x - frameX, pos.y - frameY, 0.5);
-        // stroke(255);
-        // strokeWeight(0.25);
-        // line(
-        //     prevPos.x - frameX,
-        //     prevPos.y - frameY,
-        //     pos.x - frameX,
-        //     pos.y - frameY
-        // );
-        // prevPos.set(pos);
+        stroke(255);
+        strokeWeight(0.25);
+        line(
+            prevPos.x - frameX,
+            prevPos.y - frameY,
+            pos.x - frameX,
+            pos.y - frameY
+        );
+        prevPos.set(pos);
     }
 
     PVector mouse() {
-        PVector empty = new PVector(0, 0);
-        if (!mousePressed) return empty;
+        if (!mousePressed) return new PVector();
+        if (!(mouseMode == MouseMode.ATTRACT || mouseMode == MouseMode.REPEL))
+            return new PVector();
 
         float distSq = distSq(tempPos, mouseVec);
-        if (distSq > pow(mouseRadius, 2)) return empty;
-        return PVector.sub(mouseVec, tempPos).mult(mousePower);
-    }
-
-    PVector gravity() {
-        return new PVector(0, 9.81 * mass);
+        if (distSq > pow(mouseRadius, 2)) return new PVector();
+        return PVector.sub(mouseVec, tempPos)
+            .mult(mouseMode == MouseMode.ATTRACT ? mousePower : -mousePower);
     }
 
     PVector pressure() {
@@ -245,18 +178,16 @@ class Particle {
             toAdd.set(0, 0);
 
             // if (particle.density > 0 && this.density > 0) {
-            toAdd =
-                gradCubic(this.tempPos, particle.pos, smoothingRadius)
-                    // .mult(
-                    //     particle.mass *
-                    //     ((this.pressure / pow(this.density, 2) +
-                    //       (particle.pressure / pow(particle.density,
-                    //       2))))
-                    // );
-                    .mult(
-                        particle.mass * (this.pressure + particle.pressure) /
-                        particle.density
-                    );
+            toAdd = gradCubic(this.tempPos, particle.pos, smoothingRadius)
+                        .mult(
+                            particle.mass *
+                            ((this.pressure / pow(this.density, 2) +
+                              (particle.pressure / pow(particle.density, 2))))
+                        );
+            // .mult(
+            //     particle.mass * (this.pressure + particle.pressure) /
+            //     particle.density
+            // );
             // if (toAdd.mag() > 100) println(toAdd);
             // }
 
