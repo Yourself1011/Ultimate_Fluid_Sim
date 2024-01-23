@@ -80,8 +80,8 @@ void setup() {
                 // new PVector(i * 1, j * 1),
                 // windowToGlobal(new PVector(random(width), random(height))),
                 1,
-                0.35,
-                10,
+                0.3,
+                5,
                 15,
                 color(0, 128, 255)
                 // j < 10 ? 1 : 0.8,
@@ -164,6 +164,7 @@ void draw() {
     // testParticle.pos = windowToGlobal(new PVector(mouseX, mouseY));
 
     // hash the particle positions for optimized neighbor search
+    // float timeDebug = millis();
     particles.parallelStream().forEach(Particle::hash);
     particles = mergeSort(
         particles,
@@ -171,6 +172,7 @@ void draw() {
         0,
         particles.size()
     );
+    // println(millis() - timeDebug, millis() - lastFrame);
 
     // particle precalculations
     particles.parallelStream().forEach(particle->{
@@ -179,14 +181,12 @@ void draw() {
         particle.calculatePressure();
     });
 
-    // float timeDebug = millis();
     // move the particles
     particles.parallelStream().forEach(particle->{
         particle.rk4();
         particle.move();
     });
 
-    // println(millis() - timeDebug, millis() - lastFrame);
     // draw inside a normal for loop because processing doesn't like it when you
     // try to draw things in parallel
     for (Particle particle : particles) {
@@ -213,7 +213,7 @@ void draw() {
         noFill();
         stroke(255);
         strokeWeight(0.25);
-        circle(mouseVec.x - frameX, mouseVec.y - frameY, mouseRadius);
+        circle(mouseVec.x - frameX, mouseVec.y - frameY, mouseRadius * 2);
     }
 
     popMatrix();
@@ -230,30 +230,47 @@ void draw() {
         );
     }
 
-    if (mousePressed && mouseMode == MouseMode.ADD_FLUID) {
-        for (int i = 0; i < mousePower / 15 * PI * pow(mouseRadius, 2); i++) {
-            float theta = random(0, 2 * PI);
-            float mag = random(0, mouseRadius);
-            particles.add(new Particle(
-                new VectorGetter[]{
-                    (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
-                    (VectorGetter<Particle>) Particle::pressure,
-                    (VectorGetter<Particle>) Particle::viscosity,
-                    (VectorGetter<Particle>) Particle::mouse
-                },
-                new VectorGetter[]{(VectorGetter<Particle>) Particle::window},
-                new PVector(0, 0),
-                new PVector(0, 0),
-                PVector.add(
-                    mouseVec,
-                    new PVector(cos(theta) * mag, sin(theta) * mag)
-                ),
-                1,
-                0.35,
-                10,
-                15,
-                color(128, 128, 255)
-            ));
+    if (mousePressed) {
+        switch (mouseMode) {
+            case ADD_FLUID:
+                for (int i = 0; i < mousePower / 30 * PI * pow(mouseRadius, 2);
+                     i++) {
+                    float theta = random(0, 2 * PI);
+                    float mag = random(0, mouseRadius);
+                    particles.add(new Particle(
+                        new VectorGetter[]{
+                            (VectorGetter<PhysicsObject>)
+                                PhysicsObject::gravity,
+                            (VectorGetter<Particle>) Particle::pressure,
+                            (VectorGetter<Particle>) Particle::viscosity,
+                            (VectorGetter<Particle>) Particle::mouse
+                        },
+                        new VectorGetter[]{
+                            (VectorGetter<Particle>) Particle::window
+                        },
+                        new PVector(0, 0),
+                        new PVector(0, 0),
+                        PVector.add(
+                            mouseVec,
+                            new PVector(cos(theta) * mag, sin(theta) * mag)
+                        ),
+                        1,
+                        0.3,
+                        5,
+                        15,
+                        color(128, 128, 255)
+                    ));
+                    n++;
+                }
+                break;
+
+            case REMOVE_FLUID:
+                particles.removeIf(
+                    particle->distSq(particle.pos, mouseVec) <
+                    pow(mouseRadius, 2)
+                );
+                n = particles.size();
+                break;
         }
     }
 

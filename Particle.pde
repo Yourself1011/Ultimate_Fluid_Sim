@@ -1,5 +1,5 @@
 class Particle extends PhysicsObject {
-    float density, pressure, restDensity, stiffness, viscosity;
+    float density, nearDensity, pressure, restDensity, stiffness, viscosity;
     int hash;
     color col;
     ArrayList<Particle> neighbors = new ArrayList<Particle>();
@@ -103,8 +103,9 @@ class Particle extends PhysicsObject {
                             if (distSq == 0 || Float.isNaN(distSq)) {
                                 force.add(PVector.random2D().mult(0.25));
                                 // println(this.pos, particle.pos, distSq);
-                            } else if (distSq <= pow(smoothingRadius, 2))
+                            } else if (distSq <= pow(smoothingRadius, 2)) {
                                 neighbors.add(particle);
+                            }
                         }
                     }
                 }
@@ -135,7 +136,7 @@ class Particle extends PhysicsObject {
 
     void calculatePressure() {
         pressure = stiffness * (pow(density / restDensity, 7) - 1);
-        // pressure = 500 * stiffness * (density - restDensity);
+        // pressure = 100 * stiffness * (density - restDensity);
     }
 
     void draw() {
@@ -148,15 +149,15 @@ class Particle extends PhysicsObject {
         // fill(col);
         noStroke();
         circle(pos.x - frameX, pos.y - frameY, 0.5);
-        stroke(255);
-        strokeWeight(0.25);
-        line(
-            prevPos.x - frameX,
-            prevPos.y - frameY,
-            pos.x - frameX,
-            pos.y - frameY
-        );
-        prevPos.set(pos);
+        // stroke(255);
+        // strokeWeight(0.25);
+        // line(
+        //     prevPos.x - frameX,
+        //     prevPos.y - frameY,
+        //     pos.x - frameX,
+        //     pos.y - frameY
+        // );
+        // prevPos.set(pos);
     }
 
     PVector mouse() {
@@ -188,7 +189,20 @@ class Particle extends PhysicsObject {
             //     particle.mass * (this.pressure + particle.pressure) /
             //     particle.density
             // );
-            // if (toAdd.mag() > 100) println(toAdd);
+            // if (toAdd.mag() > 100) {
+            //     println(
+            //         toAdd,
+            //         this.tempPos,
+            //         this.density,
+            //         this.restDensity,
+            //         this.pressure,
+            //         particle.pos,
+            //         particle.density,
+            //         particle.pressure,
+            //         gradSpiky(this.tempPos, particle.pos, smoothingRadius)
+            //     );
+            //     noLoop();
+            // }
             // }
 
             // if (!(Float.isNaN(toAdd.x) || Float.isNaN(toAdd.y))) {
