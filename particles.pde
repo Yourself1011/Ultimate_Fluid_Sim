@@ -11,13 +11,14 @@ GImageToggleButton[] mouseModeButtons;
 float divBy;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 Particle testParticle;
-float t, lastFrame, speed = 1;
+float t = 1, lastFrame, speed = 1;
 float smoothingRadius = 7;
 float zoom = 9;
 MouseMode mouseMode = MouseMode.NONE;
 float mouseRadius = 10, mousePower = 15;
 PVector cameraPos = new PVector(), mouseVec;
 float frameX, frameY, lastFrameX, lastFrameY;
+FramePos framePos = new FramePos();
 int n; // number of particles
 boolean fpsCounter = true;
 
@@ -282,8 +283,9 @@ void getFramePos() {
     PSurfaceAWT.SmoothCanvas sc =
         (PSurfaceAWT.SmoothCanvas) surface.getNative();
     Frame frame = sc.getFrame();
-    lastFrameX = frameX;
-    lastFrameY = frameY;
-    frameX = frame.getX() / zoom;
-    frameY = frame.getY() / zoom;
+    framePos.updateCoords(frame.getX(), frame.getY());
+    // lastFrameX = frameX;
+    // lastFrameY = frameY;
+    // frameX = frame.getX() / zoom;
+    // frameY = frame.getY() / zoom;
 }

@@ -6,7 +6,7 @@
 PVector globalToWindow(PVector global) {
     PVector result = global.copy();
     result.sub(cameraPos);
-    result.sub(frameX, frameY);
+    result.sub(framePos.left, framePos.top);
     result.mult(zoom);
     return result;
 }
@@ -19,7 +19,7 @@ PVector globalToWindow(PVector global) {
 PVector windowToGlobal(PVector window) {
     PVector result = window.copy();
     result.div(zoom);
-    result.add(frameX, frameY);
+    result.add(framePos.left, framePos.top);
     result.add(cameraPos);
     return result;
 }

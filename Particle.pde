@@ -148,7 +148,7 @@ class Particle extends PhysicsObject {
         ));
         // fill(col);
         noStroke();
-        circle(pos.x - frameX, pos.y - frameY, 0.5);
+        circle(pos.x - framePos.left, pos.y - framePos.top, 0.5);
         // stroke(255);
         // strokeWeight(0.25);
         // line(
@@ -252,30 +252,29 @@ class Particle extends PhysicsObject {
         PVector vel = this.vel.copy();
         float xAdj = pos.x - frameX - cameraPos.x,
               yAdj = pos.y - frameY - cameraPos.y;
+        PVector posAdj = globalToWindow(pos);
         float bounceDecay = 0.25;
         float minPush = 1;
 
-        if (yAdj < 0 || pos.y == Float.POSITIVE_INFINITY) {
-            vel.y = (max(abs(vel.y), minPush) + (frameY - lastFrameY) * 2 / t) *
+        if (posAdj.y < 0 || pos.y == Float.POSITIVE_INFINITY) {
+            vel.y = (max(abs(vel.y), minPush) + framePos.leftVel * 2 / t) *
                     bounceDecay;
-            pos.y = frameY + cameraPos.y + vel.y * t;
+            pos.y = framePos.top + cameraPos.y + vel.y * t;
         }
-        if (xAdj < 0 || pos.x == Float.POSITIVE_INFINITY) {
-            vel.x = (max(abs(vel.x), minPush) + (frameX - lastFrameX) * 2 / t) *
+        if (posAdj.x < 0 || pos.x == Float.POSITIVE_INFINITY) {
+            vel.x = (max(abs(vel.x), minPush) + framePos.topVel * 2 / t) *
                     bounceDecay;
-            pos.x = frameX + cameraPos.x + vel.x * t;
+            pos.x = framePos.left + cameraPos.x + vel.x * t;
         }
-        if (yAdj > height / zoom || pos.y == Float.NEGATIVE_INFINITY) {
-            vel.y =
-                (-max(abs(vel.y), minPush) + (lastFrameY - frameY) * 2 / t) *
-                bounceDecay;
-            pos.y = height / zoom + frameY + cameraPos.y + vel.y * t;
+        if (posAdj.y > height || pos.y == Float.NEGATIVE_INFINITY) {
+            vel.y = (-max(abs(vel.y), minPush) + framePos.rightVel * 2 / t) *
+                    bounceDecay;
+            pos.y = framePos.bottom + cameraPos.y + vel.y * t;
         }
-        if (xAdj > width / zoom || pos.x == Float.NEGATIVE_INFINITY) {
-            vel.x =
-                (-max(abs(vel.x), minPush) + (lastFrameX - frameX) * 2 / t) *
-                bounceDecay;
-            pos.x = width / zoom + frameX + cameraPos.x + vel.x * t;
+        if (posAdj.x > width || pos.x == Float.NEGATIVE_INFINITY) {
+            vel.x = (-max(abs(vel.x), minPush) + framePos.bottomVel * 2 / t) *
+                    bounceDecay;
+            pos.x = framePos.right + cameraPos.x + vel.x * t;
         }
 
         return vel;
