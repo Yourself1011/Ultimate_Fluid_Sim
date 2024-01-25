@@ -10,6 +10,11 @@ float spikyKernelFunction(float dist, float r) {
     return (3) / (2 * PI * pow(r, 4)) * pow(r - dist, 2);
 }
 
+Cache<Float, Float> gradSpikyCoefficient = new Cache<Float, Float>(
+    (Function<Float, Float>) (Float r)->2 * PI * pow(r, 4),
+    smoothingRadius
+);
+
 /**
  * The gradient of the above spiky kernel function
  * @param  i  the current position
@@ -20,7 +25,8 @@ float spikyKernelFunction(float dist, float r) {
 PVector gradSpiky(PVector i, PVector j, float r) {
     float dist = PVector.dist(i, j);
     if (dist > r) return new PVector();
-    float coefficient = -(6 * (r - dist)) / (2 * PI * pow(r, 4) * dist);
+    float coefficient =
+        -(6 * (r - dist)) / (gradSpikyCoefficient.get(r) * dist);
 
     // return new PVector(
     //     -(9 * (i.x - j.x) * pow(r - dist, 2)) / (2 * PI * pow(r, 5) * dist),
@@ -40,6 +46,11 @@ float cubicKernelFunction(float dist, float r) {
     return (3) / (2 * PI * pow(r, 5)) * pow(r - dist, 3);
 }
 
+Cache<Float, Float> gradCubicCoefficient = new Cache<Float, Float>(
+    (Function<Float, Float>) (Float r)->2 * PI * pow(r, 5),
+    smoothingRadius
+);
+
 /**
  * The gradient of the above cubic kernel function
  * @param  i  the current position
@@ -50,7 +61,7 @@ float cubicKernelFunction(float dist, float r) {
 PVector gradCubic(PVector i, PVector j, float r) {
     float dist = PVector.dist(i, j);
     if (dist > r) return new PVector();
-    float coefficient = -(9 * pow(r - dist, 2)) / (2 * PI * pow(r, 5) * dist);
+    float coefficient = -(9 * pow(r - dist, 2)) / (gradSpikyCoefficient.get(r) * dist);
 
     // return new PVector(
     //     -(9 * (i.x - j.x) * pow(r - dist, 2)) / (2 * PI * pow(r, 5) * dist),

@@ -1,5 +1,6 @@
 class Particle extends PhysicsObject {
-    float density, nearDensity, pressure, restDensity, stiffness, viscosity;
+    float density, nearDensity, pressure, nearPressure, restDensity, stiffness,
+        viscosity;
     int hash;
     color col;
     ArrayList<Particle> neighbors = new ArrayList<Particle>();
@@ -114,17 +115,26 @@ class Particle extends PhysicsObject {
     }
 
     void calculateDensity() {
-        this.density = this.mass * smoothKernelFunction(0, smoothingRadius);
+        // this.density = this.mass * smoothKernelFunction(0, smoothingRadius);
+        this.density = this.mass * spikyKernelFunction(0, smoothingRadius);
+        this.nearDensity = this.mass * cubicKernelFunction(0, smoothingRadius);
         // include this particle in density calculations
 
         // this.density = 0;
         // println(density);
 
         for (Particle particle : neighbors) {
-            float distSq = distSq(this.pos, particle.pos);
+            // float distSq = distSq(this.pos, particle.pos);
+
+            // density +=
+            //     particle.mass * smoothKernelFunction(distSq,
+            //     smoothingRadius);
+            float dist = PVector.dist(this.pos, particle.pos);
 
             density +=
-                particle.mass * smoothKernelFunction(distSq, smoothingRadius);
+                particle.mass * spikyKernelFunction(dist, smoothingRadius);
+            nearDensity +=
+                particle.mass * cubicKernelFunction(dist, smoothingRadius);
         }
         // if (density < 0) println("WTF");
 
@@ -136,17 +146,18 @@ class Particle extends PhysicsObject {
 
     void calculatePressure() {
         pressure = stiffness * (pow(density / restDensity, 7) - 1);
+        nearPressure = 0.5 * stiffness * nearDensity;
         // pressure = 100 * stiffness * (density - restDensity);
     }
 
     void draw() {
         // println(pressure);
-        fill(lerpColor(
-            color(8, 8, 255),
-            color(255, 0, 0),
-            map(pressure, -stiffness, stiffness, 0, 1)
-        ));
-        // fill(col);
+        // fill(lerpColor(
+        //     color(8, 8, 255),
+        //     color(255, 0, 0),
+        //     map(pressure + nearPressure, -stiffness, stiffness, 0, 1)
+        // ));
+        fill(col);
         noStroke();
         circle(pos.x - framePos.left, pos.y - framePos.top, 0.5);
         // stroke(255);
@@ -173,18 +184,29 @@ class Particle extends PhysicsObject {
 
     PVector pressure() {
         PVector pForce = new PVector(0, 0);
-        PVector toAdd = new PVector(0, 0);
+        // PVector toAdd = new PVector(0, 0);
 
         for (Particle particle : neighbors) {
-            toAdd.set(0, 0);
+            // toAdd.set(0, 0);
 
             // if (particle.density > 0 && this.density > 0) {
-            toAdd = gradCubic(this.tempPos, particle.pos, smoothingRadius)
-                        .mult(
-                            particle.mass *
-                            ((this.pressure / pow(this.density, 2) +
-                              (particle.pressure / pow(particle.density, 2))))
-                        );
+            pForce.add(fixVector(
+                gradSpiky(this.tempPos, particle.pos, smoothingRadius)
+                    .mult(
+                        particle.mass *
+                        ((this.pressure / pow(this.density, 2) +
+                          (particle.pressure / pow(particle.density, 2))))
+                    )
+            ));
+            pForce.add(fixVector(
+                gradCubic(this.tempPos, particle.pos, smoothingRadius)
+                    .mult(
+                        particle.mass *
+                        ((this.nearPressure / pow(this.nearDensity, 2) +
+                          (particle.nearPressure / pow(particle.nearDensity, 2))
+                        ))
+                    )
+            ));
             // .mult(
             //     particle.mass * (this.pressure + particle.pressure) /
             //     particle.density
@@ -206,7 +228,7 @@ class Particle extends PhysicsObject {
             // }
 
             // if (!(Float.isNaN(toAdd.x) || Float.isNaN(toAdd.y))) {
-            pForce.add(fixVector(toAdd));
+            // pForce.add(fixVector(toAdd));
             // } else {
             //     println(this.pos, particle.pos, particle.vel);
             // }
@@ -250,11 +272,9 @@ class Particle extends PhysicsObject {
 
     PVector window() {
         PVector vel = this.vel.copy();
-        float xAdj = pos.x - frameX - cameraPos.x,
-              yAdj = pos.y - frameY - cameraPos.y;
         PVector posAdj = globalToWindow(pos);
-        float bounceDecay = 0.25;
-        float minPush = 1;
+        float bounceDecay = 0.5;
+        float minPush = 0;
 
         if (posAdj.y < 0 || pos.y == Float.POSITIVE_INFINITY) {
             vel.y = (max(abs(vel.y), minPush) + framePos.leftVel * 2 / t) *

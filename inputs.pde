@@ -20,3 +20,8 @@ void changeMouseMode(MouseMode mode, GImageToggleButton source) {
         mouseMode = MouseMode.NONE;
     }
 }
+
+void mouseWheel(MouseEvent e) {
+    mouseRadius -= e.getCount() * 0.1;
+    mouseRadius = max(mouseRadius, 0);
+}

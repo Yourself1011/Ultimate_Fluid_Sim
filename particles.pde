@@ -10,6 +10,7 @@ GImageToggleButton[] mouseModeButtons;
 
 float divBy;
 ArrayList<Particle> particles = new ArrayList<Particle>();
+ArrayList<Solid> solids = new ArrayList<Solid>();
 Particle testParticle;
 float t = 1, lastFrame, speed = 1;
 float smoothingRadius = 7;
@@ -17,7 +18,6 @@ float zoom = 9;
 MouseMode mouseMode = MouseMode.NONE;
 float mouseRadius = 10, mousePower = 15;
 PVector cameraPos = new PVector(), mouseVec;
-float frameX, frameY, lastFrameX, lastFrameY;
 FramePos framePos = new FramePos();
 int n; // number of particles
 boolean fpsCounter = true;
@@ -86,7 +86,7 @@ void setup() {
                 15,
                 color(0, 128, 255)
                 // j < 10 ? 1 : 0.8,
-                // j < 10 ? 0.25 : 0.2,
+                // j < 10 ? 0.3 : 0.25,
                 // j < 10 ? 5 : 5,
                 // j < 10 ? 15 : 10,
                 // j < 10 ? color(255, 0, 0) : color(0, 255, 255)
@@ -165,7 +165,7 @@ void draw() {
     // testParticle.pos = windowToGlobal(new PVector(mouseX, mouseY));
 
     // hash the particle positions for optimized neighbor search
-    // float timeDebug = millis();
+    // float prevStep = millis();
     particles.parallelStream().forEach(Particle::hash);
     particles = mergeSort(
         particles,
@@ -173,7 +173,10 @@ void draw() {
         0,
         particles.size()
     );
-    // println(millis() - timeDebug, millis() - lastFrame);
+
+    // float timeDebug = millis();
+    // print("Sort: " + (timeDebug - prevStep) + "\t");
+    // prevStep = timeDebug;
 
     // particle precalculations
     particles.parallelStream().forEach(particle->{
@@ -182,11 +185,19 @@ void draw() {
         particle.calculatePressure();
     });
 
+    // timeDebug = millis();
+    // print("Neighbors: " + (timeDebug - prevStep) + "\t");
+    // prevStep = timeDebug;
+
     // move the particles
     particles.parallelStream().forEach(particle->{
         particle.rk4();
         particle.move();
     });
+
+    // timeDebug = millis();
+    // print("Integrate: " + (timeDebug - prevStep) + "\t");
+    // prevStep = timeDebug;
 
     // draw inside a normal for loop because processing doesn't like it when you
     // try to draw things in parallel
@@ -194,6 +205,12 @@ void draw() {
         // particle.move();
         particle.draw();
     }
+
+    // timeDebug = millis();
+    // print("Draw: " + (timeDebug - prevStep) + "\t");
+    // prevStep = timeDebug;
+    // println();
+
     // fill(0, 255, 0);
     // for (Particle particle : testParticle.neighbors) {
     //     circle(particle.pos.x - frameX, particle.pos.y - frameY, 1);
@@ -214,7 +231,11 @@ void draw() {
         noFill();
         stroke(255);
         strokeWeight(0.25);
-        circle(mouseVec.x - frameX, mouseVec.y - frameY, mouseRadius * 2);
+        circle(
+            mouseVec.x - framePos.left,
+            mouseVec.y - framePos.top,
+            mouseRadius * 2
+        );
     }
 
     popMatrix();
@@ -284,8 +305,4 @@ void getFramePos() {
         (PSurfaceAWT.SmoothCanvas) surface.getNative();
     Frame frame = sc.getFrame();
     framePos.updateCoords(frame.getX(), frame.getY());
-    // lastFrameX = frameX;
-    // lastFrameY = frameY;
-    // frameX = frame.getX() / zoom;
-    // frameY = frame.getY() / zoom;
 }
