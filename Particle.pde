@@ -1,9 +1,10 @@
 class Particle extends PhysicsObject {
     float density, nearDensity, pressure, nearPressure, restDensity, stiffness,
-        viscosity;
+        nearStiffness, viscosity, radius;
     int hash;
     color col;
     ArrayList<Particle> neighbors = new ArrayList<Particle>();
+    PVector restOffset;
 
     Particle(
         VectorGetter[] f,
@@ -14,14 +15,18 @@ class Particle extends PhysicsObject {
         float mass,
         float restDensity,
         float stiffness,
+        float nearStiffness,
         float viscosity,
-        color col
+        color col,
+        float radius
     ) {
         super(f, v, force, vel, pos, mass);
         this.restDensity = restDensity;
         this.stiffness = stiffness;
+        this.nearStiffness = nearStiffness;
         this.viscosity = viscosity;
         this.col = col;
+        this.radius = radius;
         this.prevPos = pos.copy();
     }
 
@@ -49,64 +54,46 @@ class Particle extends PhysicsObject {
             for (float y = -smoothingRadius; y <= smoothingRadius;
                  y += smoothingRadius) {
                 int cellHash = hashPosition(pos.copy().add(x, y));
-                int firstIndex = binarySearch(
-                    particles,
-                    cellHash,
-                    Particle::getHash,
-                    0,
-                    n,
-                    -n / 2,
-                    n / 2
-                );
+                // int firstIndex = binarySearch(
+                //     particles,
+                //     cellHash,
+                //     Particle::getHash,
+                //     0,
+                //     n,
+                //     0,
+                //     n
+                // );
+                int firstIndex = indexLookup[cellHash];
 
-                if (firstIndex != -1) {
-                    ArrayList<Particle> candidates = new ArrayList();
-                    // add this particle to neighbors if in range
-                    Particle p = particles.get(firstIndex);
+                ArrayList<Particle> candidates = new ArrayList();
+                // add this particle to neighbors if in range
+                Particle p = particles.get(firstIndex);
+
+                candidates.add(p);
+
+                // Go forwards from the particle we first found until
+                // we've found all particles with the hash we are
+                // looking for. Add them if they are in range
+                while (true) {
+                    firstIndex++;
+                    if (firstIndex >= particles.size()) break;
+
+                    p = particles.get(firstIndex);
+                    if (p.hash != cellHash) break;
 
                     candidates.add(p);
+                    p = particles.get(firstIndex);
+                }
 
-                    int iBack = firstIndex;
+                for (Particle particle : candidates) {
+                    float distSq = distSq(this.pos, particle.pos);
+                    if (particle != this) {
 
-                    // Go back from the particle we first found until we've
-                    // found all particles with the hash we are looking for. Add
-                    // them if they are in range
-
-                    while (true) {
-                        iBack--;
-                        if (iBack < 0) break;
-
-                        p = particles.get(iBack);
-                        if (p.hash != cellHash) break;
-
-                        candidates.add(p);
-                        p = particles.get(iBack);
-                    }
-
-                    // Go forwards from the particle we first found until
-                    // we've found all particles with the hash we are
-                    // looking for. Add them if they are in range
-                    while (true) {
-                        firstIndex++;
-                        if (firstIndex >= particles.size()) break;
-
-                        p = particles.get(firstIndex);
-                        if (p.hash != cellHash) break;
-
-                        candidates.add(p);
-                        p = particles.get(firstIndex);
-                    }
-
-                    for (Particle particle : candidates) {
-                        float distSq = distSq(this.pos, particle.pos);
-                        if (particle != this) {
-
-                            if (distSq == 0 || Float.isNaN(distSq)) {
-                                force.add(PVector.random2D().mult(0.25));
-                                // println(this.pos, particle.pos, distSq);
-                            } else if (distSq <= pow(smoothingRadius, 2)) {
-                                neighbors.add(particle);
-                            }
+                        if (distSq == 0 || Float.isNaN(distSq)) {
+                            force.add(PVector.random2D().mult(0.25));
+                            // println(this.pos, particle.pos, distSq);
+                        } else if (distSq <= pow(smoothingRadius, 2)) {
+                            neighbors.add(particle);
                         }
                     }
                 }
@@ -119,9 +106,6 @@ class Particle extends PhysicsObject {
         this.density = this.mass * spikyKernelFunction(0, smoothingRadius);
         this.nearDensity = this.mass * cubicKernelFunction(0, smoothingRadius);
         // include this particle in density calculations
-
-        // this.density = 0;
-        // println(density);
 
         for (Particle particle : neighbors) {
             // float distSq = distSq(this.pos, particle.pos);
@@ -136,7 +120,6 @@ class Particle extends PhysicsObject {
             nearDensity +=
                 particle.mass * cubicKernelFunction(dist, smoothingRadius);
         }
-        // if (density < 0) println("WTF");
 
         // draw a ring around the smoothing radius
         // stroke(255, 0, 0);
@@ -146,7 +129,7 @@ class Particle extends PhysicsObject {
 
     void calculatePressure() {
         pressure = stiffness * (pow(density / restDensity, 7) - 1);
-        nearPressure = 0.5 * stiffness * nearDensity;
+        nearPressure = nearStiffness * nearDensity;
         // pressure = 100 * stiffness * (density - restDensity);
     }
 
@@ -159,7 +142,7 @@ class Particle extends PhysicsObject {
         // ));
         fill(col);
         noStroke();
-        circle(pos.x - framePos.left, pos.y - framePos.top, 0.5);
+        circle(pos.x - framePos.left, pos.y - framePos.top, radius);
         // stroke(255);
         // strokeWeight(0.25);
         // line(
@@ -168,7 +151,7 @@ class Particle extends PhysicsObject {
         //     pos.x - frameX,
         //     pos.y - frameY
         // );
-        // prevPos.set(pos);
+        prevPos.set(pos);
     }
 
     PVector mouse() {
@@ -279,24 +262,31 @@ class Particle extends PhysicsObject {
         if (posAdj.y < 0 || pos.y == Float.POSITIVE_INFINITY) {
             vel.y = (max(abs(vel.y), minPush) + framePos.leftVel * 2 / t) *
                     bounceDecay;
-            pos.y = framePos.top + cameraPos.y + vel.y * t;
+            pos.y = framePos.top + cameraPos.y;
         }
         if (posAdj.x < 0 || pos.x == Float.POSITIVE_INFINITY) {
             vel.x = (max(abs(vel.x), minPush) + framePos.topVel * 2 / t) *
                     bounceDecay;
-            pos.x = framePos.left + cameraPos.x + vel.x * t;
+            pos.x = framePos.left + cameraPos.x;
         }
         if (posAdj.y > height || pos.y == Float.NEGATIVE_INFINITY) {
             vel.y = (-max(abs(vel.y), minPush) + framePos.rightVel * 2 / t) *
                     bounceDecay;
-            pos.y = framePos.bottom + cameraPos.y + vel.y * t;
+            pos.y = framePos.bottom + cameraPos.y;
         }
         if (posAdj.x > width || pos.x == Float.NEGATIVE_INFINITY) {
             vel.x = (-max(abs(vel.x), minPush) + framePos.bottomVel * 2 / t) *
                     bounceDecay;
-            pos.x = framePos.right + cameraPos.x + vel.x * t;
+            pos.x = framePos.right + cameraPos.x;
         }
 
+        return vel;
+    }
+
+    PVector solidCollisions() {
+        for (Solid solid : solids) {
+            solid.checkCollision(this);
+        }
         return vel;
     }
 }

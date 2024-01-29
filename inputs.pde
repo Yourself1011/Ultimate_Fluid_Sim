@@ -16,9 +16,21 @@ void changeMouseMode(MouseMode mode, GImageToggleButton source) {
                 button.setState(0);
             }
         }
+
+        hideAllPanels();
+        switch (mode) {
+            case ADD_FLUID:
+                addFluidPanel.setVisible(true);
+                break;
+        }
     } else {
         mouseMode = MouseMode.NONE;
+        hideAllPanels();
     }
+}
+
+void hideAllPanels() {
+    addFluidPanel.setVisible(false);
 }
 
 void mouseWheel(MouseEvent e) {

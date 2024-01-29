@@ -4,8 +4,9 @@
  * @return  the hash number (int)
  */
 int hashPosition(PVector p) {
-    float gridSize = smoothingRadius;
-    return ((floor(p.x / gridSize) * 73856093) ^
-            (floor(p.y / gridSize) * 19349663)) %
-           (n / 2);
+    return Math.floorMod(
+        (floor(p.x / smoothingRadius) * 73856093) ^
+            (floor(p.y / smoothingRadius) * 19349663),
+        n
+    );
 }

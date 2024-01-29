@@ -2,5 +2,3 @@
 // modifiers
 interface VectorGetter<T extends PhysicsObject> extends Function<T, PVector> {
 }
-// interface AnyVectorGetter extends VectorGetter < ? extends PhysicsObject > {
-// }

@@ -2,6 +2,7 @@ import g4p_controls.*;
 import processing.awt.*;
 import java.awt.Frame;
 import java.util.function.*;
+import java.util.stream.*;
 import java.util.*;
 
 final float[] rkCoefficients = {1, 0.5, 0.5, 1};
@@ -9,6 +10,7 @@ final float[] rkCoefficients = {1, 0.5, 0.5, 1};
 GImageToggleButton[] mouseModeButtons;
 
 float divBy;
+int[] indexLookup;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 ArrayList<Solid> solids = new ArrayList<Solid>();
 Particle testParticle;
@@ -27,46 +29,13 @@ void setup() {
     windowResizable(true);
     // frameRate(1);
 
-    // merge sort test
-    // ArrayList<Float> l = new ArrayList<Float>();
-    // for (int i = 0; i < 21; i++) {
-    //     l.add(random(10));
-    // }
-    // println(
-    //     this.<Float>mergeSort(l, Comparator.<Float>naturalOrder(), 0,
-    //     l.size())
-    // );
-    // noLoop();
-
-    // binary search test
-    // ArrayList<Integer> l = new ArrayList<Integer>();
-    // l.add(1);
-    // l.add(2);
-    // l.add(2);
-    // l.add(2);
-    // l.add(2);
-    // l.add(3);
-    // l.add(3);
-    // l.add(3);
-    // l.add(5);
-    // l.add(5);
-    // l.add(5);
-    // l.add(5);
-    // l.add(6);
-    // l.add(6);
-    // l.add(8);
-    // println(
-    //     this.<Integer>binarySearch(l, 4, Integer::intValue, 0, l.size(), 1,
-    //     6)
-    // );
-
     cameraPos.set(-displayWidth / (2 * zoom), -displayHeight / (2 * zoom));
     getFramePos();
 
     // Arrange in grid/random
     // for (int i = 0; i < 2000; i++) {
-    for (int i = -25; i < 25; i++) {
-        for (int j = -25; j < 25; j++) {
+    for (int i = -26; i < 26; i++) {
+        for (int j = -24; j < 24; j++) {
             particles.add(new Particle(
                 new VectorGetter[]{
                     (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
@@ -74,37 +43,47 @@ void setup() {
                     (VectorGetter<Particle>) Particle::viscosity,
                     (VectorGetter<Particle>) Particle::mouse
                 },
-                new VectorGetter[]{(VectorGetter<Particle>) Particle::window},
+                new VectorGetter[]{
+                    (VectorGetter<Particle>) Particle::window,
+                    (VectorGetter<Particle>) Particle::solidCollisions
+                },
                 new PVector(0, 0),
                 new PVector(0, 0),
                 new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
                 // new PVector(i * 1, j * 1),
                 // windowToGlobal(new PVector(random(width), random(height))),
                 1,
-                0.3,
-                5,
+                0.25,
                 15,
-                color(0, 128, 255)
-                // j < 10 ? 1 : 0.8,
-                // j < 10 ? 0.3 : 0.25,
-                // j < 10 ? 5 : 5,
-                // j < 10 ? 15 : 10,
-                // j < 10 ? color(255, 0, 0) : color(0, 255, 255)
+                2.5,
+                5,
+                color(0, 128, 255),
+                0.5
+                // j < 10 ? 1 : 0.5,
+                // j < 10 ? 0.25 : 0.125,
+                // j < 10 ? 10 : 1,
+                // j < 10 ? 5 : 0.5,
+                // j < 10 ? 10 : 5,
+                // j < 10 ? color(255, 0, 0) : color(0, 255, 255),
+                // 0.5
             ));
         }
     }
 
     // testParticle = new Particle(
     //     new VectorGetter[]{},
-    //     new VectorGetter[]{VelMod.WINDOW},
+    //     new VectorGetter[]{},
     //     new PVector(0, 0),
     //     new PVector(0, 0),
     //     // new PVector(i * 2, j * 2),
     //     windowToGlobal(new PVector(random(width), random(height))),
-    //     0.075,
-    //     15
-    //     // 0.035,
-    //     // 15
+    //     1,
+    //     0.25,
+    //     15,
+    //     2.5,
+    //     5,
+    //     color(0, 128, 255),
+    //     0.5
     // );
     // particles.add(testParticle);
     // particles.add(new Particle(
@@ -116,8 +95,29 @@ void setup() {
     //     10,
     //     0.5
     // ));
+
+    // solids.add(new Solid(
+    //     new VectorGetter[]{
+    //         // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
+    //     },
+    //     new VectorGetter[]{},
+    //     new PVector(0, 0),
+    //     new PVector(0, 0),
+    //     new PVector(0, 0),
+    //     10000,
+    //     new ArrayList<PVector>(Arrays.asList(
+    //         new PVector(-5, -10),
+    //         new PVector(5, -10),
+    //         new PVector(5, 0),
+    //         new PVector(-5, 0)
+    //     )),
+    //     new PVector(0, -5),
+    //     0
+    // ));
+
     n = particles.size();
     createGUI();
+    hideAllPanels();
 
     mouseModeButtons = new GImageToggleButton[]{
         toolAddFluid,
@@ -148,10 +148,12 @@ void draw() {
     // Draw hash grid (for debug purposes)
     // PVector start = windowToGlobal(new PVector(0, 0)),
     //         end = windowToGlobal(new PVector(width, height));
-    // start.x = floor(start.x / smoothingRadius) * smoothingRadius - frameX;
-    // start.y = floor(start.y / smoothingRadius) * smoothingRadius - frameY;
-    // end.x = floor(end.x / smoothingRadius) * smoothingRadius - frameX;
-    // end.y = floor(end.y / smoothingRadius) * smoothingRadius - frameY;
+    // start.x =
+    //     floor(start.x / smoothingRadius) * smoothingRadius - framePos.left;
+    // start.y = floor(start.y / smoothingRadius) * smoothingRadius -
+    // framePos.top; end.x = floor(end.x / smoothingRadius) * smoothingRadius -
+    // framePos.left; end.y = floor(end.y / smoothingRadius) * smoothingRadius -
+    // framePos.top;
 
     // stroke(200);
     // strokeWeight(0.5);
@@ -164,15 +166,29 @@ void draw() {
 
     // testParticle.pos = windowToGlobal(new PVector(mouseX, mouseY));
 
-    // hash the particle positions for optimized neighbor search
     // float prevStep = millis();
+    // hash the particle positions for optimized neighbor search
     particles.parallelStream().forEach(Particle::hash);
-    particles = mergeSort(
-        particles,
-        Comparator.comparing(Particle::getHash),
-        0,
-        particles.size()
-    );
+    if (!particles.isEmpty()) {
+        particles = mergeSort(
+            particles,
+            Comparator.comparing(Particle::getHash),
+            0,
+            particles.size()
+        );
+
+        // Store the position of the first time the hash appears
+        indexLookup = new int[n];
+
+        indexLookup[particles.get(0).hash] = 0;
+        IntStream.range(1, particles.size()).parallel().forEach(i->{
+            Particle p = particles.get(i);
+
+            if (p.hash != particles.get(i - 1).hash) {
+                indexLookup[p.hash] = i;
+            }
+        });
+    }
 
     // float timeDebug = millis();
     // print("Sort: " + (timeDebug - prevStep) + "\t");
@@ -194,16 +210,20 @@ void draw() {
         particle.rk4();
         particle.move();
     });
+    solids.parallelStream().forEach(solid->{ solid.move(); });
 
     // timeDebug = millis();
     // print("Integrate: " + (timeDebug - prevStep) + "\t");
     // prevStep = timeDebug;
 
-    // draw inside a normal for loop because processing doesn't like it when you
-    // try to draw things in parallel
+    // draw inside a normal for loop because processing doesn't like it when
+    // you try to draw things in parallel
     for (Particle particle : particles) {
         // particle.move();
         particle.draw();
+    }
+    for (Solid solid : solids) {
+        solid.draw();
     }
 
     // timeDebug = millis();
@@ -213,7 +233,11 @@ void draw() {
 
     // fill(0, 255, 0);
     // for (Particle particle : testParticle.neighbors) {
-    //     circle(particle.pos.x - frameX, particle.pos.y - frameY, 1);
+    //     circle(
+    //         particle.pos.x - framePos.left,
+    //         particle.pos.y - framePos.top,
+    //         1
+    //     );
     // }
     // println(testParticle.hash);
 
@@ -246,7 +270,8 @@ void draw() {
         textSize(24);
         fill(255);
         text(
-            "fps: " + frameRate + "\nmspf: " + (millis() - lastFrame),
+            "fps: " + frameRate + "\nmspf: " + (millis() - lastFrame) + "\n" +
+                n + " particles",
             width - 10,
             10
         );
@@ -258,7 +283,7 @@ void draw() {
                 for (int i = 0; i < mousePower / 30 * PI * pow(mouseRadius, 2);
                      i++) {
                     float theta = random(0, 2 * PI);
-                    float mag = random(0, mouseRadius);
+                    float mag = sqrt(random(1)) * mouseRadius;
                     particles.add(new Particle(
                         new VectorGetter[]{
                             (VectorGetter<PhysicsObject>)
@@ -268,19 +293,23 @@ void draw() {
                             (VectorGetter<Particle>) Particle::mouse
                         },
                         new VectorGetter[]{
-                            (VectorGetter<Particle>) Particle::window
+                            (VectorGetter<Particle>) Particle::window,
+                            (VectorGetter<Particle>) Particle::solidCollisions
                         },
                         new PVector(0, 0),
-                        new PVector(0, 0),
+                        PVector.fromAngle(velDirectionSlider.getValueF())
+                            .mult(velMagSlider.getValueF()),
                         PVector.add(
                             mouseVec,
                             new PVector(cos(theta) * mag, sin(theta) * mag)
                         ),
-                        1,
-                        0.3,
-                        5,
-                        15,
-                        color(128, 128, 255)
+                        massSlider.getValueF(),
+                        restDensitySlider.getValueF(),
+                        stiffnessSlider.getValueF(),
+                        nearStiffnessSlider.getValueF(),
+                        pow(viscositySlider.getValueF(), 2),
+                        color(128, 128, 255),
+                        0.5
                     ));
                     n++;
                 }

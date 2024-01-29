@@ -32,3 +32,22 @@ PVector fixVector(PVector vec) {
     // }
     return vec;
 }
+
+// Intersection of lines between four points, where p1 and p2 form a line, and
+// p3 and p4 form a line
+PVector intersectOfLines(PVector p1, PVector p2, PVector p3, PVector p4) {
+    float t = ((p1.x - p3.x) * (p3.y - p4.y) - (p1.y - p3.y) * (p3.x - p4.x)) /
+              ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
+    float u = -((p1.x - p2.x) * (p1.y - p3.y) - (p1.y - p2.y) * (p1.x - p3.x)) /
+              ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
+
+    // println(t, u, p1, p2, p3, p4);
+    if (t < 0 || t > 1 || u < 0 || u > 1) {
+        return null;
+    }
+    return PVector.add(p1, PVector.sub(p2, p1).mult(t));
+}
+
+PVector rotatePoint(PVector point, PVector origin, float theta) {
+    return point.sub(origin).rotate(theta).add(origin);
+}

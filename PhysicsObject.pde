@@ -66,6 +66,7 @@ abstract class PhysicsObject {
         // }
 
         vel.add(PVector.mult(force, t / mass));
+        force.set(0, 0);
 
         for (VectorGetter v : velMods) {
             vel = fixVector((PVector) v.apply(this));
@@ -73,7 +74,6 @@ abstract class PhysicsObject {
 
         pos.add(PVector.mult(vel, t));
         fixVector(pos);
-        force.set(0, 0);
     }
 
     abstract void draw();

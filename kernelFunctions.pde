@@ -61,7 +61,8 @@ Cache<Float, Float> gradCubicCoefficient = new Cache<Float, Float>(
 PVector gradCubic(PVector i, PVector j, float r) {
     float dist = PVector.dist(i, j);
     if (dist > r) return new PVector();
-    float coefficient = -(9 * pow(r - dist, 2)) / (gradSpikyCoefficient.get(r) * dist);
+    float coefficient =
+        -(9 * pow(r - dist, 2)) / (gradSpikyCoefficient.get(r) * dist);
 
     // return new PVector(
     //     -(9 * (i.x - j.x) * pow(r - dist, 2)) / (2 * PI * pow(r, 5) * dist),
@@ -110,7 +111,7 @@ Cache<Float, Float> laplacianViscosityCoefficient = new Cache<Float, Float>(
 
 /**
  * The Laplacian of the above function
- * @param  dist  the distance between the two particles, squared
+ * @param  dist  the distance between the two particles
  * @param  r  the smoothing radius
  * @return  The laplacian of the viscosity kernel
  */
