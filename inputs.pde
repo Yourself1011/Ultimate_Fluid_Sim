@@ -25,6 +25,8 @@ void changeMouseMode(MouseMode mode, GImageToggleButton source) {
                 break;
             case SOLID:
                 addSolidPanel.setVisible(true);
+                shapePoints.clear();
+                addSolidButton.setEnabled(false);
                 break;
         }
     } else {
@@ -41,4 +43,17 @@ void hideAllPanels() {
 void mouseWheel(MouseEvent e) {
     mouseRadius -= e.getCount() * 0.1;
     mouseRadius = max(mouseRadius, 0);
+}
+
+void mousePressed() {
+    if (mouseMode == MouseMode.SOLID) {
+        if (settingCMass) {
+            shapeCMass = mouseVec.copy();
+            settingCMass = false;
+            addSolidButton.setEnabled(true);
+
+        } else {
+            shapePoints.add(mouseVec.copy());
+        }
+    }
 }

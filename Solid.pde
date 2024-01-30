@@ -3,6 +3,7 @@ class Solid extends PhysicsObject {
     PVector centerMass, centerPoints = new PVector();
     float rSq, friction;
     float torque, spin;
+    boolean fixed;
 
     Solid(
         VectorGetter[] f,
@@ -13,12 +14,14 @@ class Solid extends PhysicsObject {
         float mass,
         ArrayList<PVector> points,
         PVector centerMass,
-        float friction
+        float friction,
+        boolean fixed
     ) {
         super(f, v, force, vel, pos, mass);
         this.points = points;
         this.centerMass = centerMass;
         this.friction = friction;
+        this.fixed = fixed;
 
         for (PVector point : points) {
             centerPoints.add(point);
@@ -71,7 +74,7 @@ class Solid extends PhysicsObject {
             //     1
             // );
 
-            // addImpulse(impulse, intersection);
+            if (!fixed) addImpulse(impulse, intersection);
 
             p.vel.set(PVector.mult(impulse, -1 / p.mass));
             p.pos.set(PVector.sub(intersection, PVector.mult(normal, -p.radius))

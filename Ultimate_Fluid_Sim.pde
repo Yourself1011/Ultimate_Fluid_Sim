@@ -24,8 +24,9 @@ FramePos framePos = new FramePos();
 int n; // number of particles
 boolean fpsCounter = false, paused = false;
 
-// ArrayList<PVector> shapePoints = new ArrayList<PVector>();
-// PVector shapeCMass;
+ArrayList<PVector> shapePoints = new ArrayList<PVector>();
+PVector shapeCMass;
+boolean settingCMass = false;
 
 void setup() {
     size(600, 600);
@@ -37,36 +38,41 @@ void setup() {
 
     // Arrange in grid/random
     // for (int i = 0; i < 2000; i++) {
-    // for (int i = -26; i < 26; i++) {
-    //     for (int j = -24; j < 24; j++) {
-    //         particles.add(new Particle(
-    //             new VectorGetter[]{
-    //                 (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
-    //                 (VectorGetter<Particle>) Particle::pressure,
-    //                 (VectorGetter<Particle>) Particle::viscosity,
-    //                 (VectorGetter<Particle>) Particle::mouse
-    //             },
-    //             new VectorGetter[]{
-    //                 (VectorGetter<Particle>) Particle::window,
-    //                 (VectorGetter<Particle>) Particle::solidCollisions
-    //             },
-    //             new PVector(0, 0),
-    //             new PVector(0, 0),
-    //             new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
-    //             // new PVector(i * 1, j * 1),
-    //             // windowToGlobal(new PVector(random(width),
-    //             random(height))), 1, 0.25, 15, 2.5, 5, color(0, 128, 255),
-    //             0.5
-    //             // j < 10 ? 1 : 0.5,
-    //             // j < 10 ? 0.25 : 0.125,
-    //             // j < 10 ? 10 : 1,
-    //             // j < 10 ? 5 : 0.5,
-    //             // j < 10 ? 10 : 5,
-    //             // j < 10 ? color(255, 0, 0) : color(0, 255, 255),
-    //             // 0.5
-    //         ));
-    //     }
-    // }
+    for (int i = -26; i < 26; i++) {
+        for (int j = -24; j < 24; j++) {
+            particles.add(new Particle(
+                new VectorGetter[]{
+                    (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
+                    (VectorGetter<Particle>) Particle::pressure,
+                    (VectorGetter<Particle>) Particle::viscosity,
+                    (VectorGetter<Particle>) Particle::mouse
+                },
+                new VectorGetter[]{
+                    (VectorGetter<Particle>) Particle::window,
+                    (VectorGetter<Particle>) Particle::solidCollisions
+                },
+                new PVector(0, 0),
+                new PVector(0, 0),
+                new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
+                // new PVector(i * 1, j * 1),
+                // windowToGlobal(new PVector(random(width), random(height))),
+                1,
+                0.25,
+                15,
+                2.5,
+                5,
+                color(0, 128, 255),
+                0.5
+                // j < 10 ? 1 : 0.5,
+                // j < 10 ? 0.25 : 0.125,
+                // j < 10 ? 10 : 1,
+                // j < 10 ? 5 : 0.5,
+                // j < 10 ? 10 : 5,
+                // j < 10 ? color(255, 0, 0) : color(0, 255, 255),
+                // 0.5
+            ));
+        }
+    }
 
     // testParticle = new Particle(
     //     new VectorGetter[]{},
@@ -94,24 +100,25 @@ void setup() {
     //     0.5
     // ));
 
-    solids.add(new Solid(
-        new VectorGetter[]{
-            // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
-        },
-        new VectorGetter[]{},
-        new PVector(0, 0),
-        new PVector(0, 0),
-        new PVector(0, 0),
-        50,
-        new ArrayList<PVector>(Arrays.asList(
-            new PVector(-5, -10),
-            new PVector(5, -10),
-            new PVector(5, 0),
-            new PVector(-5, 0)
-        )),
-        new PVector(0, -5),
-        0
-    ));
+    // solids.add(new Solid(
+    //     new VectorGetter[]{
+    //         // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
+    //     },
+    //     new VectorGetter[]{},
+    //     new PVector(0, 0),
+    //     new PVector(0, 0),
+    //     new PVector(0, 0),
+    //     50,
+    //     new ArrayList<PVector>(Arrays.asList(
+    //         new PVector(-5, -10),
+    //         new PVector(5, -10),
+    //         new PVector(5, 0),
+    //         new PVector(-5, 0)
+    //     )),
+    //     new PVector(0, -5),
+    //     0,
+    //     true
+    // ));
 
     n = particles.size();
     createGUI();
@@ -165,8 +172,34 @@ void draw() {
 
     // testParticle.pos = windowToGlobal(new PVector(mouseX, mouseY));
 
-    if (!(paused || mouseMode == MouseMode.SOLID)) {
+    if (mouseMode == MouseMode.SOLID) {
 
+        stroke(255);
+        noFill();
+        strokeWeight(0.5);
+        beginShape();
+        for (PVector point : shapePoints) {
+            vertex(point.x - framePos.left, point.y - framePos.top);
+        }
+        if (!settingCMass)
+            vertex(mouseVec.x - framePos.left, mouseVec.y - framePos.top);
+        endShape(CLOSE);
+
+        if (settingCMass) {
+            fill(0, 0, 255);
+            noStroke();
+            circle(mouseVec.x - framePos.left, mouseVec.y - framePos.top, 0.5);
+        } else if (shapeCMass != null) {
+            fill(0, 0, 255);
+            noStroke();
+            circle(
+                shapeCMass.x - framePos.left,
+                shapeCMass.y - framePos.top,
+                0.5
+            );
+        }
+
+    } else if (!paused) {
         // float prevStep = millis();
         // hash the particle positions for optimized neighbor search
         particles.parallelStream().forEach(Particle::hash);
@@ -282,6 +315,7 @@ void draw() {
     if (mousePressed) {
         switch (mouseMode) {
             case ADD_FLUID:
+                colorMode(HSB, 360, 100, 100);
                 for (int i = 0; i < mousePower / 30 * PI * pow(mouseRadius, 2);
                      i++) {
                     // delay(500);
@@ -311,11 +345,16 @@ void draw() {
                         stiffnessSlider.getValueF(),
                         nearStiffnessSlider.getValueF(),
                         pow(viscositySlider.getValueF(), 2),
-                        color(128, 128, 255),
+                        color(
+                            HSlider.getValueF(),
+                            SLSlider.getValueXF(),
+                            SLSlider.getValueYF()
+                        ),
                         0.5
                     ));
                     n++;
                 }
+                colorMode(RGB);
                 break;
 
             case REMOVE_FLUID:
