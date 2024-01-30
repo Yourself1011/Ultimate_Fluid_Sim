@@ -92,8 +92,8 @@ void addSolid(GButton source, GEvent event) { //_CODE_:addSolidButton:884517:
         new PVector(0, 0),
         new PVector(0, 0),
         mSolidSlider.getValueF(),
-        shapePoints,
-        shapeCMass,
+        (ArrayList<PVector>) shapePoints.clone(),
+        shapeCMass.copy(),
         frictionSlider.getValueF(),
         fixedSolid.isSelected()
     ));
@@ -167,7 +167,7 @@ void createGUI() {
     stiffnessSlider.setLimits(10.0, 0.0, 25.0);
     stiffnessSlider.setNumberFormat(G4P.DECIMAL, 2);
     stiffnessSlider.setOpaque(false);
-    label4 = new GLabel(window1, 10, 140, 80, 20);
+    label4 = new GLabel(window1, 10, 135, 80, 20);
     label4.setText("Stiffness");
     label4.setOpaque(false);
     label5 = new GLabel(window1, 10, 195, 80, 20);
@@ -247,7 +247,6 @@ void createGUI() {
     label8.setText("Speed");
     label8.setOpaque(false);
     addSolidPanel = new GPanel(window1, 60, 130, 250, 460, "Add Solid");
-    addSolidPanel.setCollapsible(false);
     addSolidPanel.setDraggable(false);
     addSolidPanel.setText("Add Solid");
     addSolidPanel.setLocalColorScheme(GCScheme.ORANGE_SCHEME);
