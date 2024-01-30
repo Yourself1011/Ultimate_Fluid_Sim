@@ -35,12 +35,17 @@ class Solid extends PhysicsObject {
         if (distSq(p.pos, centerPoints) > rSq) return;
 
         for (int i = 0; i < points.size(); i++) {
-            PVector p1 = points.get(i),
-                    p2 = points.get(i + 1 == points.size() ? 0 : i + 1);
+            PVector velStep = PVector.mult(vel, t);
+            PVector p1 = PVector.add(points.get(i), velStep),
+                    p2 = PVector.add(
+                        points.get(i + 1 == points.size() ? 0 : i + 1),
+                        velStep
+                    );
 
+            PVector radiusVector = p.vel.copy().setMag(p.radius);
             PVector intersection = intersectOfLines(
-                p.pos,
-                PVector.add(p.pos, PVector.mult(p.vel, t)),
+                PVector.sub(p.pos, radiusVector),
+                PVector.add(p.pos, radiusVector).add(PVector.mult(p.vel, t)),
                 p1,
                 p2
             );
@@ -48,7 +53,7 @@ class Solid extends PhysicsObject {
             if (intersection == null) continue;
 
             PVector normal = new PVector(p2.y - p1.y, p1.x - p2.x).setMag(1);
-            PVector relVel = PVector.sub(p.vel, this.vel);
+            PVector relVel = PVector.sub(p.vel, velAtPoint(intersection));
 
             PVector velNormal =
                 PVector.mult(normal, PVector.dot(relVel, normal));
@@ -59,15 +64,18 @@ class Solid extends PhysicsObject {
 
             // println(impulse);
             // fill(255, 0, 0);
+            // noStroke();
             // circle(
             //     intersection.x - framePos.left,
             //     intersection.y - framePos.top,
             //     1
             // );
 
-            addImpulse(impulse, intersection);
+            // addImpulse(impulse, intersection);
 
             p.vel.set(PVector.mult(impulse, -1 / p.mass));
+            p.pos.set(PVector.sub(intersection, PVector.mult(normal, -p.radius))
+            );
         }
     }
 
@@ -82,8 +90,8 @@ class Solid extends PhysicsObject {
             intCMassNorm.x * impulseNorm.y - intCMassNorm.y * impulseNorm.x
         );
 
-        spin += lenImpulse * sin(theta) / intCMass.mag() / mass;
-        vel.set(PVector.mult(intCMassNorm, lenImpulse * cos(theta) / mass));
+        spin -= lenImpulse * sin(theta) / intCMass.mag() / mass;
+        vel.add(PVector.mult(intCMassNorm, lenImpulse * cos(theta) / mass));
     }
 
     @Override void move() {
@@ -120,6 +128,13 @@ class Solid extends PhysicsObject {
         rotatePoint(centerPoints, centerMass, theta);
     }
 
+    PVector velAtPoint(PVector point) {
+        PVector pToC = PVector.sub(point, centerMass);
+
+        PVector rot = pToC.rotate(PI / 2).setMag(spin * pToC.mag());
+        return PVector.add(vel, rot);
+    }
+
     void draw() {
         stroke(255);
         noFill();
@@ -129,5 +144,38 @@ class Solid extends PhysicsObject {
             vertex(point.x - framePos.left, point.y - framePos.top);
         }
         endShape(CLOSE);
+    }
+
+    PVector window() {
+        for (PVector point : points) {
+            PVector vel = velAtPoint(point);
+            PVector posAdj = globalToWindow(pos);
+            float bounceDecay = 0.5;
+            float minPush = 0;
+
+            if (posAdj.y < 0 || pos.y == Float.POSITIVE_INFINITY) {
+                vel.y = (max(abs(vel.y), minPush) + framePos.leftVel * 2 / t) *
+                        bounceDecay;
+                pos.y = framePos.top + cameraPos.y;
+            }
+            if (posAdj.x < 0 || pos.x == Float.POSITIVE_INFINITY) {
+                vel.x = (max(abs(vel.x), minPush) + framePos.topVel * 2 / t) *
+                        bounceDecay;
+                pos.x = framePos.left + cameraPos.x;
+            }
+            if (posAdj.y > height || pos.y == Float.NEGATIVE_INFINITY) {
+                vel.y =
+                    (-max(abs(vel.y), minPush) + framePos.rightVel * 2 / t) *
+                    bounceDecay;
+                pos.y = framePos.bottom + cameraPos.y;
+            }
+            if (posAdj.x > width || pos.x == Float.NEGATIVE_INFINITY) {
+                vel.x =
+                    (-max(abs(vel.x), minPush) + framePos.bottomVel * 2 / t) *
+                    bounceDecay;
+                pos.x = framePos.right + cameraPos.x;
+            }
+        }
+        return vel;
     }
 }

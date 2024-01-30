@@ -3,7 +3,8 @@ enum MouseMode {
     ADD_FLUID,
     REMOVE_FLUID,
     ATTRACT,
-    REPEL
+    REPEL,
+    SOLID
 
 }
 
@@ -22,6 +23,9 @@ void changeMouseMode(MouseMode mode, GImageToggleButton source) {
             case ADD_FLUID:
                 addFluidPanel.setVisible(true);
                 break;
+            case SOLID:
+                addSolidPanel.setVisible(true);
+                break;
         }
     } else {
         mouseMode = MouseMode.NONE;
@@ -31,6 +35,7 @@ void changeMouseMode(MouseMode mode, GImageToggleButton source) {
 
 void hideAllPanels() {
     addFluidPanel.setVisible(false);
+    addSolidPanel.setVisible(false);
 }
 
 void mouseWheel(MouseEvent e) {

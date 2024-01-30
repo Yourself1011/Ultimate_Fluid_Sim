@@ -46,41 +46,9 @@ public void panel1_Click1(GPanel source, GEvent event) { //_CODE_:addFluidPanel:
   println("panel1 - GPanel >> GEvent." + event + " @ " + millis());
 } //_CODE_:addFluidPanel:889065:
 
-public void restDensityChange(GSlider source, GEvent event) { //_CODE_:restDensitySlider:579701:
-  println("restDensitySlider - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:restDensitySlider:579701:
-
-public void stiffnessChange(GSlider source, GEvent event) { //_CODE_:stiffnessSlider:458812:
-  println("stiffnessSlider - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:stiffnessSlider:458812:
-
-public void nearStiffnessChange(GSlider source, GEvent event) { //_CODE_:nearStiffnessSlider:543069:
-  println("nearStiffnessSlider - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:nearStiffnessSlider:543069:
-
-public void viscosityChange(GSlider source, GEvent event) { //_CODE_:viscositySlider:413589:
-  println("viscositySlider - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:viscositySlider:413589:
-
-public void massChange(GSlider source, GEvent event) { //_CODE_:massSlider:633151:
-  println("massSlider - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:massSlider:633151:
-
-public void slider2d1_change1(GSlider2D source, GEvent event) { //_CODE_:slider2d1:799333:
-  println("slider2d1 - GSlider2D >> GEvent." + event + " @ " + millis());
-} //_CODE_:slider2d1:799333:
-
-public void velDirectionChange(GKnob source, GEvent event) { //_CODE_:velDirectionSlider:253441:
-  println("knob1 - GKnob >> GEvent." + event + " @ " + millis());
-} //_CODE_:velDirectionSlider:253441:
-
-public void velMagChange(GSlider source, GEvent event) { //_CODE_:velMagSlider:448005:
-  println("velMagSlider - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:velMagSlider:448005:
-
-public void speedChange(GSlider source, GEvent event) { //_CODE_:speedSlider:740465:
-  println("slider1 - GSlider >> GEvent." + event + " @ " + millis());
-} //_CODE_:speedSlider:740465:
+public void changeToolSolid(GImageToggleButton source, GEvent event) { //_CODE_:toolSolid:641667:
+  changeMouseMode(MouseMode.SOLID, source);
+} //_CODE_:toolSolid:641667:
 
 
 
@@ -125,10 +93,9 @@ public void createGUI(){
   addFluidPanel.addEventHandler(this, "panel1_Click1");
   restDensitySlider = new GSlider(window1, 10, 90, 100, 40, 10.0);
   restDensitySlider.setShowValue(true);
-  restDensitySlider.setLimits(0.25, 0.0, 5.0);
+  restDensitySlider.setLimits(3.0, 0.0, 10.0);
   restDensitySlider.setNumberFormat(G4P.DECIMAL, 2);
   restDensitySlider.setOpaque(false);
-  restDensitySlider.addEventHandler(this, "restDensityChange");
   label2 = new GLabel(window1, 10, 75, 80, 20);
   label2.setText("Rest Density");
   label2.setOpaque(false);
@@ -137,7 +104,6 @@ public void createGUI(){
   stiffnessSlider.setLimits(10.0, 0.0, 25.0);
   stiffnessSlider.setNumberFormat(G4P.DECIMAL, 2);
   stiffnessSlider.setOpaque(false);
-  stiffnessSlider.addEventHandler(this, "stiffnessChange");
   label4 = new GLabel(window1, 10, 135, 80, 20);
   label4.setText("Stiffness");
   label4.setOpaque(false);
@@ -149,7 +115,6 @@ public void createGUI(){
   nearStiffnessSlider.setLimits(5.0, 0.0, 25.0);
   nearStiffnessSlider.setNumberFormat(G4P.DECIMAL, 2);
   nearStiffnessSlider.setOpaque(false);
-  nearStiffnessSlider.addEventHandler(this, "nearStiffnessChange");
   label6 = new GLabel(window1, 10, 255, 80, 20);
   label6.setText("Viscosity");
   label6.setOpaque(false);
@@ -158,7 +123,6 @@ public void createGUI(){
   viscositySlider.setLimits(3.0, 0.0, 20.0);
   viscositySlider.setNumberFormat(G4P.DECIMAL, 2);
   viscositySlider.setOpaque(false);
-  viscositySlider.addEventHandler(this, "viscosityChange");
   label7 = new GLabel(window1, 10, 310, 80, 20);
   label7.setText("Color");
   label7.setOpaque(false);
@@ -167,16 +131,14 @@ public void createGUI(){
   massSlider.setLimits(1.0, 0.0, 10.0);
   massSlider.setNumberFormat(G4P.DECIMAL, 2);
   massSlider.setOpaque(false);
-  massSlider.addEventHandler(this, "massChange");
   label3 = new GLabel(window1, 10, 25, 80, 20);
   label3.setText("Mass");
   label3.setOpaque(false);
-  slider2d1 = new GSlider2D(window1, 10, 330, 80, 80);
-  slider2d1.setLimitsX(0.5, 0.0, 1.0);
-  slider2d1.setLimitsY(0.5, 0.0, 1.0);
-  slider2d1.setNumberFormat(G4P.DECIMAL, 2);
-  slider2d1.setOpaque(true);
-  slider2d1.addEventHandler(this, "slider2d1_change1");
+  SLSlider = new GSlider2D(window1, 10, 330, 80, 80);
+  SLSlider.setLimitsX(0.5, 0.0, 1.0);
+  SLSlider.setLimitsY(0.5, 0.0, 1.0);
+  SLSlider.setNumberFormat(G4P.DECIMAL, 2);
+  SLSlider.setOpaque(true);
   label9 = new GLabel(window1, 120, 25, 100, 20);
   label9.setText("Velocity");
   label9.setOpaque(false);
@@ -190,12 +152,14 @@ public void createGUI(){
   velDirectionSlider.setLimits(0.0, 0.0, 6.2831855);
   velDirectionSlider.setShowTicks(true);
   velDirectionSlider.setOpaque(false);
-  velDirectionSlider.addEventHandler(this, "velDirectionChange");
   velMagSlider = new GSlider(window1, 120, 90, 100, 40, 10.0);
   velMagSlider.setLimits(0.0, 0.0, 50.0);
   velMagSlider.setNumberFormat(G4P.DECIMAL, 2);
   velMagSlider.setOpaque(false);
-  velMagSlider.addEventHandler(this, "velMagChange");
+  HSlider = new GSlider(window1, 10, 410, 100, 40, 10.0);
+  HSlider.setLimits(0.5, 0.0, 1.0);
+  HSlider.setNumberFormat(G4P.DECIMAL, 2);
+  HSlider.setOpaque(false);
   addFluidPanel.addControl(restDensitySlider);
   addFluidPanel.addControl(label2);
   addFluidPanel.addControl(stiffnessSlider);
@@ -207,18 +171,35 @@ public void createGUI(){
   addFluidPanel.addControl(label7);
   addFluidPanel.addControl(massSlider);
   addFluidPanel.addControl(label3);
-  addFluidPanel.addControl(slider2d1);
+  addFluidPanel.addControl(SLSlider);
   addFluidPanel.addControl(label9);
   addFluidPanel.addControl(velDirectionSlider);
   addFluidPanel.addControl(velMagSlider);
+  addFluidPanel.addControl(HSlider);
   speedSlider = new GSlider(window1, 60, 90, 100, 40, 10.0);
   speedSlider.setLimits(0.5, 0.0, 1.0);
   speedSlider.setNumberFormat(G4P.DECIMAL, 2);
   speedSlider.setOpaque(false);
-  speedSlider.addEventHandler(this, "speedChange");
   label8 = new GLabel(window1, 60, 80, 80, 20);
   label8.setText("Speed");
   label8.setOpaque(false);
+  addSolidPanel = new GPanel(window1, 60, 130, 250, 460, "Add Solid");
+  addSolidPanel.setCollapsible(false);
+  addSolidPanel.setDraggable(false);
+  addSolidPanel.setText("Add Solid");
+  addSolidPanel.setLocalColorScheme(GCScheme.ORANGE_SCHEME);
+  addSolidPanel.setOpaque(true);
+  label10 = new GLabel(window1, 10, 35, 80, 20);
+  label10.setText("Mass");
+  label10.setOpaque(false);
+  mSolidSlider = new GSlider(window1, 10, 50, 100, 40, 10.0);
+  mSolidSlider.setLimits(50.0, 0.0, 500.0);
+  mSolidSlider.setNumberFormat(G4P.DECIMAL, 2);
+  mSolidSlider.setOpaque(false);
+  addSolidPanel.addControl(label10);
+  addSolidPanel.addControl(mSolidSlider);
+  toolSolid = new GImageToggleButton(window1, 10, 210, "pen-tool-icon.png", 2, 1);
+  toolSolid.addEventHandler(this, "changeToolSolid");
   window1.loop();
 }
 
@@ -244,9 +225,14 @@ GSlider viscositySlider;
 GLabel label7; 
 GSlider massSlider; 
 GLabel label3; 
-GSlider2D slider2d1; 
+GSlider2D SLSlider; 
 GLabel label9; 
 GKnob velDirectionSlider; 
 GSlider velMagSlider; 
+GSlider HSlider; 
 GSlider speedSlider; 
 GLabel label8; 
+GPanel addSolidPanel; 
+GLabel label10; 
+GSlider mSolidSlider; 
+GImageToggleButton toolSolid; 

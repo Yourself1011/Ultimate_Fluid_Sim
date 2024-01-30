@@ -14,7 +14,7 @@ int[] indexLookup;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 ArrayList<Solid> solids = new ArrayList<Solid>();
 Particle testParticle;
-float t = 1, lastFrame, speed = 1;
+float t = 1, lastFrame;
 float smoothingRadius = 7;
 float zoom = 9;
 MouseMode mouseMode = MouseMode.NONE;
@@ -22,7 +22,10 @@ float mouseRadius = 10, mousePower = 15;
 PVector cameraPos = new PVector(), mouseVec;
 FramePos framePos = new FramePos();
 int n; // number of particles
-boolean fpsCounter = true;
+boolean fpsCounter = false, paused = false;
+
+// ArrayList<PVector> shapePoints = new ArrayList<PVector>();
+// PVector shapeCMass;
 
 void setup() {
     size(600, 600);
@@ -34,41 +37,36 @@ void setup() {
 
     // Arrange in grid/random
     // for (int i = 0; i < 2000; i++) {
-    for (int i = -26; i < 26; i++) {
-        for (int j = -24; j < 24; j++) {
-            particles.add(new Particle(
-                new VectorGetter[]{
-                    (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
-                    (VectorGetter<Particle>) Particle::pressure,
-                    (VectorGetter<Particle>) Particle::viscosity,
-                    (VectorGetter<Particle>) Particle::mouse
-                },
-                new VectorGetter[]{
-                    (VectorGetter<Particle>) Particle::window,
-                    (VectorGetter<Particle>) Particle::solidCollisions
-                },
-                new PVector(0, 0),
-                new PVector(0, 0),
-                new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
-                // new PVector(i * 1, j * 1),
-                // windowToGlobal(new PVector(random(width), random(height))),
-                1,
-                0.25,
-                15,
-                2.5,
-                5,
-                color(0, 128, 255),
-                0.5
-                // j < 10 ? 1 : 0.5,
-                // j < 10 ? 0.25 : 0.125,
-                // j < 10 ? 10 : 1,
-                // j < 10 ? 5 : 0.5,
-                // j < 10 ? 10 : 5,
-                // j < 10 ? color(255, 0, 0) : color(0, 255, 255),
-                // 0.5
-            ));
-        }
-    }
+    // for (int i = -26; i < 26; i++) {
+    //     for (int j = -24; j < 24; j++) {
+    //         particles.add(new Particle(
+    //             new VectorGetter[]{
+    //                 (VectorGetter<PhysicsObject>) PhysicsObject::gravity,
+    //                 (VectorGetter<Particle>) Particle::pressure,
+    //                 (VectorGetter<Particle>) Particle::viscosity,
+    //                 (VectorGetter<Particle>) Particle::mouse
+    //             },
+    //             new VectorGetter[]{
+    //                 (VectorGetter<Particle>) Particle::window,
+    //                 (VectorGetter<Particle>) Particle::solidCollisions
+    //             },
+    //             new PVector(0, 0),
+    //             new PVector(0, 0),
+    //             new PVector(i < 0 ? i * 1 - 10 : i * 1 + 10, j * 1),
+    //             // new PVector(i * 1, j * 1),
+    //             // windowToGlobal(new PVector(random(width),
+    //             random(height))), 1, 0.25, 15, 2.5, 5, color(0, 128, 255),
+    //             0.5
+    //             // j < 10 ? 1 : 0.5,
+    //             // j < 10 ? 0.25 : 0.125,
+    //             // j < 10 ? 10 : 1,
+    //             // j < 10 ? 5 : 0.5,
+    //             // j < 10 ? 10 : 5,
+    //             // j < 10 ? color(255, 0, 0) : color(0, 255, 255),
+    //             // 0.5
+    //         ));
+    //     }
+    // }
 
     // testParticle = new Particle(
     //     new VectorGetter[]{},
@@ -96,24 +94,24 @@ void setup() {
     //     0.5
     // ));
 
-    // solids.add(new Solid(
-    //     new VectorGetter[]{
-    //         // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
-    //     },
-    //     new VectorGetter[]{},
-    //     new PVector(0, 0),
-    //     new PVector(0, 0),
-    //     new PVector(0, 0),
-    //     10000,
-    //     new ArrayList<PVector>(Arrays.asList(
-    //         new PVector(-5, -10),
-    //         new PVector(5, -10),
-    //         new PVector(5, 0),
-    //         new PVector(-5, 0)
-    //     )),
-    //     new PVector(0, -5),
-    //     0
-    // ));
+    solids.add(new Solid(
+        new VectorGetter[]{
+            // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
+        },
+        new VectorGetter[]{},
+        new PVector(0, 0),
+        new PVector(0, 0),
+        new PVector(0, 0),
+        50,
+        new ArrayList<PVector>(Arrays.asList(
+            new PVector(-5, -10),
+            new PVector(5, -10),
+            new PVector(5, 0),
+            new PVector(-5, 0)
+        )),
+        new PVector(0, -5),
+        0
+    ));
 
     n = particles.size();
     createGUI();
@@ -123,7 +121,8 @@ void setup() {
         toolAddFluid,
         toolRemoveFluid,
         toolRepel,
-        toolAttract
+        toolAttract,
+        toolSolid
     };
 
     for (float coefficient : rkCoefficients) {
@@ -139,7 +138,7 @@ void draw() {
 
     if (lastFrame == 0) lastFrame = millis();
     // t = (millis() - lastFrame) / 1000 * speed;
-    t = 1 / 20.0;
+    t = 1 / 20.0 * speedSlider.getValueF();
 
     getFramePos();
 
@@ -166,55 +165,58 @@ void draw() {
 
     // testParticle.pos = windowToGlobal(new PVector(mouseX, mouseY));
 
-    // float prevStep = millis();
-    // hash the particle positions for optimized neighbor search
-    particles.parallelStream().forEach(Particle::hash);
-    if (!particles.isEmpty()) {
-        particles = mergeSort(
-            particles,
-            Comparator.comparing(Particle::getHash),
-            0,
-            particles.size()
-        );
+    if (!(paused || mouseMode == MouseMode.SOLID)) {
 
-        // Store the position of the first time the hash appears
-        indexLookup = new int[n];
+        // float prevStep = millis();
+        // hash the particle positions for optimized neighbor search
+        particles.parallelStream().forEach(Particle::hash);
+        if (!particles.isEmpty()) {
+            particles = mergeSort(
+                particles,
+                Comparator.comparing(Particle::getHash),
+                0,
+                particles.size()
+            );
 
-        indexLookup[particles.get(0).hash] = 0;
-        IntStream.range(1, particles.size()).parallel().forEach(i->{
-            Particle p = particles.get(i);
+            // Store the position of the first time the hash appears
+            indexLookup = new int[n];
 
-            if (p.hash != particles.get(i - 1).hash) {
-                indexLookup[p.hash] = i;
-            }
+            indexLookup[particles.get(0).hash] = 0;
+            IntStream.range(1, particles.size()).parallel().forEach(i->{
+                Particle p = particles.get(i);
+
+                if (p.hash != particles.get(i - 1).hash) {
+                    indexLookup[p.hash] = i;
+                }
+            });
+        }
+
+        // float timeDebug = millis();
+        // print("Sort: " + (timeDebug - prevStep) + "\t");
+        // prevStep = timeDebug;
+
+        // particle precalculations
+        particles.parallelStream().forEach(particle->{
+            particle.neighborSearch();
+            particle.calculateDensity();
+            particle.calculatePressure();
         });
+
+        // timeDebug = millis();
+        // print("Neighbors: " + (timeDebug - prevStep) + "\t");
+        // prevStep = timeDebug;
+
+        // move the particles
+        particles.parallelStream().forEach(particle->{
+            particle.rk4();
+            particle.move();
+        });
+        solids.parallelStream().forEach(solid->{ solid.move(); });
+
+        // timeDebug = millis();
+        // print("Integrate: " + (timeDebug - prevStep) + "\t");
+        // prevStep = timeDebug;
     }
-
-    // float timeDebug = millis();
-    // print("Sort: " + (timeDebug - prevStep) + "\t");
-    // prevStep = timeDebug;
-
-    // particle precalculations
-    particles.parallelStream().forEach(particle->{
-        particle.neighborSearch();
-        particle.calculateDensity();
-        particle.calculatePressure();
-    });
-
-    // timeDebug = millis();
-    // print("Neighbors: " + (timeDebug - prevStep) + "\t");
-    // prevStep = timeDebug;
-
-    // move the particles
-    particles.parallelStream().forEach(particle->{
-        particle.rk4();
-        particle.move();
-    });
-    solids.parallelStream().forEach(solid->{ solid.move(); });
-
-    // timeDebug = millis();
-    // print("Integrate: " + (timeDebug - prevStep) + "\t");
-    // prevStep = timeDebug;
 
     // draw inside a normal for loop because processing doesn't like it when
     // you try to draw things in parallel
@@ -251,7 +253,7 @@ void draw() {
     // println(test.density, test.pressure);
     // smoothingRadius += 0.1;
 
-    if (mouseMode != MouseMode.NONE) {
+    if (!(mouseMode == MouseMode.NONE || mouseMode == MouseMode.SOLID)) {
         noFill();
         stroke(255);
         strokeWeight(0.25);
@@ -282,6 +284,7 @@ void draw() {
             case ADD_FLUID:
                 for (int i = 0; i < mousePower / 30 * PI * pow(mouseRadius, 2);
                      i++) {
+                    // delay(500);
                     float theta = random(0, 2 * PI);
                     float mag = sqrt(random(1)) * mouseRadius;
                     particles.add(new Particle(
@@ -304,7 +307,7 @@ void draw() {
                             new PVector(cos(theta) * mag, sin(theta) * mag)
                         ),
                         massSlider.getValueF(),
-                        restDensitySlider.getValueF(),
+                        pow(2, restDensitySlider.getValueF() - 5),
                         stiffnessSlider.getValueF(),
                         nearStiffnessSlider.getValueF(),
                         pow(viscositySlider.getValueF(), 2),
