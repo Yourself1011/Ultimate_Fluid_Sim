@@ -82,21 +82,7 @@ void changeCenterMass(
 public
 
 void addSolid(GButton source, GEvent event) { //_CODE_:addSolidButton:884517:
-
-    solids.add(new Solid(
-        new VectorGetter[]{
-            // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
-        },
-        new VectorGetter[]{},
-        new PVector(0, 0),
-        new PVector(0, 0),
-        new PVector(0, 0),
-        mSolidSlider.getValueF(),
-        (ArrayList<PVector>) shapePoints.clone(),
-        shapeCMass.copy(),
-        frictionSlider.getValueF(),
-        fixedSolid.isSelected()
-    ));
+    queueSolid = true;
     changeMouseMode(MouseMode.NONE, toolSolid);
     toolSolid.setState(0);
 } //_CODE_:addSolidButton:884517:

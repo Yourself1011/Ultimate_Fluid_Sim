@@ -22,7 +22,7 @@ float mouseRadius = 10, mousePower = 15;
 PVector cameraPos = new PVector(), mouseVec;
 FramePos framePos = new FramePos();
 int n; // number of particles
-boolean fpsCounter = false, paused = false;
+boolean fpsCounter = false, paused = false, queueSolid = false;
 
 ArrayList<PVector> shapePoints = new ArrayList<PVector>();
 PVector shapeCMass;
@@ -365,6 +365,24 @@ void draw() {
                 n = particles.size();
                 break;
         }
+    }
+
+    if (queueSolid) {
+        solids.add(new Solid(
+            new VectorGetter[]{
+                // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
+            },
+            new VectorGetter[]{},
+            new PVector(0, 0),
+            new PVector(0, 0),
+            new PVector(0, 0),
+            mSolidSlider.getValueF(),
+            (ArrayList<PVector>) shapePoints.clone(),
+            shapeCMass.copy(),
+            frictionSlider.getValueF(),
+            fixedSolid.isSelected()
+        ));
+        queueSolid = false;
     }
 
     lastFrame = millis();
