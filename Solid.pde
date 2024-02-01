@@ -23,6 +23,10 @@ class Solid extends PhysicsObject {
         this.friction = friction;
         this.fixed = fixed;
 
+        if (points.get(0).x < points.get(1).x) {
+            Collections.reverse(points);
+        }
+
         for (PVector point : points) {
             centerPoints.add(point);
         }
@@ -44,6 +48,12 @@ class Solid extends PhysicsObject {
                         points.get(i + 1 == points.size() ? 0 : i + 1),
                         velStep
                     );
+
+            // if (p1.x > p2.x) {
+            //     PVector temp = p1.copy();
+            //     p1 = p2.copy();
+            //     p2 = temp;
+            // }
 
             PVector radiusVector = p.vel.copy().setMag(p.radius);
             PVector intersection = intersectOfLines(
@@ -77,7 +87,7 @@ class Solid extends PhysicsObject {
             if (!fixed) addImpulse(impulse, intersection);
 
             p.vel.set(PVector.mult(impulse, -1 / p.mass));
-            p.pos.set(PVector.sub(intersection, PVector.mult(normal, -p.radius))
+            p.pos.set(PVector.sub(intersection, PVector.mult(normal, p.radius))
             );
         }
     }

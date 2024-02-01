@@ -354,7 +354,7 @@ void draw() {
                     ));
                     n++;
                 }
-                colorMode(RGB);
+                colorMode(RGB, 256);
                 break;
 
             case REMOVE_FLUID:
