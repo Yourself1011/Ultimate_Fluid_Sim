@@ -212,7 +212,7 @@ void draw() {
             );
 
             // Store the position of the first time the hash appears
-            indexLookup = new int[n];
+            indexLookup = new int[2 * n];
 
             indexLookup[particles.get(0).hash] = 0;
             IntStream.range(1, particles.size()).parallel().forEach(i->{

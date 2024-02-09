@@ -7,6 +7,6 @@ int hashPosition(PVector p) {
     return Math.floorMod(
         (floor(p.x / smoothingRadius) * 73856093) ^
             (floor(p.y / smoothingRadius) * 19349663),
-        n
+        2 * n
     );
 }
