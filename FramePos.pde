@@ -14,7 +14,7 @@ class FramePos {
         leftVel = (left - leftNext) / t;
         topVel = (top - topNext) / t;
         rightVel = (right - rightNext) / t;
-        topVel = (top - topNext) / t;
+        bottomVel = (bottom - bottomNext) / t;
 
         left = leftNext;
         top = topNext;
