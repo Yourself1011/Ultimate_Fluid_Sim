@@ -18,6 +18,9 @@ class Solid extends PhysicsObject {
         boolean fixed
     ) {
         super(f, v, force, vel, pos, mass);
+        if (fixed) {
+            this.forces = new VectorGetter[]{};
+        }
         this.points = points;
         this.centerMass = centerMass;
         this.friction = friction;
@@ -66,13 +69,12 @@ class Solid extends PhysicsObject {
             if (intersection == null) continue;
 
             PVector normal = new PVector(p2.y - p1.y, p1.x - p2.x).setMag(1);
+            PVector relVel = PVector.sub(p.vel, velAtPoint(intersection));
 
-            if (PVector.dot(PVector.mult(normal, -1), p.vel) >
-                PVector.dot(normal, p.vel)) {
+            if (PVector.dot(PVector.mult(normal, -1), relVel) >
+                PVector.dot(normal, relVel)) {
                 normal.mult(-1);
             }
-
-            PVector relVel = PVector.sub(p.vel, velAtPoint(intersection));
 
             PVector velNormal =
                 PVector.mult(normal, PVector.dot(relVel, normal));

@@ -370,7 +370,7 @@ void draw() {
     if (queueSolid) {
         solids.add(new Solid(
             new VectorGetter[]{
-                // (VectorGetter<PhysicsObject>) PhysicsObject::gravity
+                (VectorGetter<PhysicsObject>) PhysicsObject::gravity
             },
             new VectorGetter[]{},
             new PVector(0, 0),
