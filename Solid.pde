@@ -170,33 +170,27 @@ class Solid extends PhysicsObject {
     PVector window() {
         for (PVector point : points) {
             PVector vel = velAtPoint(point);
-            PVector posAdj = globalToWindow(pos);
+            PVector posAdj = globalToWindow(point);
             float bounceDecay = 0.5;
             float minPush = 0;
 
-            if (posAdj.y < 0 || pos.y == Float.POSITIVE_INFINITY) {
-                vel.y = (max(abs(vel.y), minPush) + framePos.leftVel * 2 / t) *
-                        bounceDecay;
-                pos.y = framePos.top + cameraPos.y;
+            if (posAdj.y < 0 || point.y == Float.POSITIVE_INFINITY) {
+                addImpulse(new PVector(0, 1 / t * vel.y * bounceDecay), point);
+                translate(new PVector(0, -posAdj.y * 0.5));
             }
-            if (posAdj.x < 0 || pos.x == Float.POSITIVE_INFINITY) {
-                vel.x = (max(abs(vel.x), minPush) + framePos.topVel * 2 / t) *
-                        bounceDecay;
-                pos.x = framePos.left + cameraPos.x;
+            if (posAdj.x < 0 || point.x == Float.POSITIVE_INFINITY) {
+                addImpulse(new PVector(1 / t * vel.x * bounceDecay, 0), point);
+                translate(new PVector(-posAdj.x * 0.5, 0));
             }
-            if (posAdj.y > height || pos.y == Float.NEGATIVE_INFINITY) {
-                vel.y =
-                    (-max(abs(vel.y), minPush) + framePos.rightVel * 2 / t) *
-                    bounceDecay;
-                pos.y = framePos.bottom + cameraPos.y;
+            if (posAdj.y > height || point.y == Float.NEGATIVE_INFINITY) {
+                addImpulse(new PVector(0, -1 / t * vel.y * bounceDecay), point);
+                translate(new PVector(0, (height - posAdj.y) * 0.5));
             }
-            if (posAdj.x > width || pos.x == Float.NEGATIVE_INFINITY) {
-                vel.x =
-                    (-max(abs(vel.x), minPush) + framePos.bottomVel * 2 / t) *
-                    bounceDecay;
-                pos.x = framePos.right + cameraPos.x;
+            if (posAdj.x > width || point.x == Float.NEGATIVE_INFINITY) {
+                addImpulse(new PVector(-1 / t * vel.x * bounceDecay, 0), point);
+                translate(new PVector((width - posAdj.x) * 0.5, 0));
             }
         }
-        return vel;
+        return this.vel;
     }
 }

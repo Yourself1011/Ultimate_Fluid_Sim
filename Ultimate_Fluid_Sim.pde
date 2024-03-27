@@ -372,7 +372,7 @@ void draw() {
             new VectorGetter[]{
                 (VectorGetter<PhysicsObject>) PhysicsObject::gravity
             },
-            new VectorGetter[]{},
+            new VectorGetter[]{(VectorGetter<Solid>) Solid::window},
             new PVector(0, 0),
             new PVector(0, 0),
             new PVector(0, 0),
