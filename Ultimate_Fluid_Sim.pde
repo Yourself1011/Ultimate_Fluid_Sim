@@ -144,7 +144,7 @@ void draw() {
     translate(-cameraPos.x, -cameraPos.y);
 
     if (lastFrame == 0) lastFrame = millis();
-    // t = (millis() - lastFrame) / 1000 * speed;
+    // t = (millis() - lastFrame) / 1000 * speedSlider.getValueF();
     t = 1 / 20.0 * speedSlider.getValueF();
 
     getFramePos();
