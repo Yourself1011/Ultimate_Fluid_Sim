@@ -7,13 +7,14 @@ import java.util.*;
 ArrayList<Particle> particles = new ArrayList<Particle>();
 Particle testParticle;
 float t, lastFrame, speed = 1;
-float smoothingRadius = 10;
+float smoothingRadius = 1;
 float zoom = 9;
 float mouseRadius = 10, mousePower = 15;
 PVector cameraPos = new PVector(0, 0), mouseVec;
 float frameX, frameY, lastFrameX, lastFrameY;
 int n; // number of particles
 boolean fpsCounter = true;
+Particle test;
 
 void setup() {
     size(600, 600);
@@ -62,10 +63,10 @@ void setup() {
         for (int j = -25; j < 25; j++) {
             particles.add(new Particle(
                 new VectorGetter[]{
-                    Particle::pressure,
-                    Particle::viscosity,
-                    Particle::gravity,
-                    Particle::mouse
+                    // Particle::pressure,
+                    // Particle::viscosity,
+                    // Particle::gravity,
+                    // Particle::mouse
                 },
                 new VectorGetter[]{Particle::window},
                 new PVector(0, 0),
@@ -75,7 +76,7 @@ void setup() {
                 0.25,
                 10,
                 15,
-                color(255, 0, 0)
+                color(0, 0, 255)
                 // i < 0 ? 0.25 : 0.3,
                 // 15,
                 // i < 0 ? 400 : 10,
@@ -107,6 +108,7 @@ void setup() {
     //     0.5
     // ));
     n = particles.size();
+    test = particles.get(n / 2 + 25);
     createGUI();
 }
 
@@ -121,7 +123,7 @@ void draw() {
     t = 1 / 10.0;
     lastFrame = millis();
 
-    getFramePos();
+    // getFramePos();
 
     mouseVec = windowToGlobal(new PVector(mouseX, mouseY));
 
@@ -154,14 +156,14 @@ void draw() {
     );
 
     // particle precalculations
-    particles.parallelStream().forEach(particle->{
-        particle.neighborSearch();
-        particle.calculateDensity();
-        particle.calculatePressure();
-    });
+    // particles.parallelStream().forEach(particle->{
+    //     particle.neighborSearch();
+    //     particle.calculateDensity();
+    //     particle.calculatePressure();
+    // });
 
-    // move the particles
-    particles.parallelStream().forEach(Particle::move);
+    // // move the particles
+    // particles.parallelStream().forEach(Particle::move);
 
     // draw inside a normal for loop because processing doesn't like it when you
     // try to draw things in parallel
@@ -178,12 +180,11 @@ void draw() {
     // noLoop();
 
     // density test
-    // Particle test = particles.get(n / 2 + 7);
-    // test.neighborSearch();
-    // test.calculateDensity();
-    // test.calculatePressure();
-    // println(test.density, test.pressure);
-    // smoothingRadius += 0.1;
+    test.neighborSearch();
+    test.calculateDensity();
+    test.calculatePressure();
+    println(test.density);
+    smoothingRadius += 0.1;
 
     popMatrix();
 

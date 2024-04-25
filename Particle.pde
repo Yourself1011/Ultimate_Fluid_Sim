@@ -148,9 +148,10 @@ class Particle {
         }
 
         // draw a ring around the smoothing radius
-        // stroke(255, 0, 0);
-        // noFill();
-        // circle(pos.x - frameX, pos.y - frameY, smoothingRadius * 2);
+        stroke(255, 0, 0);
+        strokeWeight(0.5);
+        noFill();
+        circle(pos.x - frameX, pos.y - frameY, smoothingRadius * 2);
     }
 
     void calculatePressure() {
@@ -160,12 +161,12 @@ class Particle {
 
     void draw() {
         // println(pressure);
-        fill(lerpColor(
-            color(0, 0, 255),
-            color(255, 0, 0),
-            map(pressure, -stiffness, stiffness, 0, 1)
-        ));
-        // fill(col);
+        // fill(lerpColor(
+        //     color(0, 0, 255),
+        //     color(255, 0, 0),
+        //     map(pressure, -stiffness, stiffness, 0, 1)
+        // ));
+        fill(col);
         noStroke();
         circle(pos.x - frameX, pos.y - frameY, 0.5);
     }
