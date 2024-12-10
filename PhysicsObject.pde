@@ -3,7 +3,8 @@ abstract class PhysicsObject {
     VectorGetter[] velMods;
     PVector force, vel, tempVel = new PVector(), pos, tempPos = new PVector(),
                         prevPos = new PVector();
-    ArrayList<PVector> k = new ArrayList<PVector>();
+    ArrayList<PVector> k = new ArrayList<PVector>(),
+                       kv = new ArrayList<PVector>();
     float mass;
 
     PhysicsObject(
@@ -23,6 +24,7 @@ abstract class PhysicsObject {
 
         for (int i = 0; i < rkCoefficients.length; i++) {
             k.add(new PVector());
+            kv.add(new PVector());
         }
     }
 
@@ -36,6 +38,8 @@ abstract class PhysicsObject {
         tempVel.set(vel);
         tempPos.set(pos);
 
+        kv.set(0, vel);
+
         for (VectorGetter f : forces) {
             kThis.add(fixVector((PVector) f.apply(this)));
             // if (kThis.mag() == Float.POSITIVE_INFINITY) println(f);
@@ -45,6 +49,8 @@ abstract class PhysicsObject {
         for (int i = 1; i < rkCoefficients.length; i++) {
             tempVel.add(PVector.mult(kThis, t * rkCoefficients[i] / mass));
             tempPos.add(PVector.mult(tempVel, t * rkCoefficients[i]));
+
+            kv.set(i, tempVel);
 
             kThis = k.get(i);
             kThis.set(0, 0);
@@ -72,7 +78,17 @@ abstract class PhysicsObject {
             vel = fixVector((PVector) v.apply(this));
         }
 
-        pos.add(PVector.mult(vel, t));
+        PVector rkVel = new PVector();
+        for (int i = 0; i < rkCoefficients.length; i++) {
+            rkVel.add(kv.get(i).div(rkCoefficients[i]));
+        }
+        rkVel.div(divBy);
+
+        for (VectorGetter v : velMods) {
+            rkVel = fixVector((PVector) v.apply(this));
+        }
+
+        pos.add(PVector.mult(rkVel, t));
         fixVector(pos);
     }
 
